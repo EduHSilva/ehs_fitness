@@ -26,7 +26,7 @@ class TasksViewState extends State<TasksView> {
       length: 3,
       child: Scaffold(
         appBar: CustomAppBar(
-          title: 'Tasks',
+          title: 'tasks',
           bottom: TabBar(
             labelColor: AppColors.onPrimary,
             tabs: [
