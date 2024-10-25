@@ -1,10 +1,9 @@
 import 'dart:convert';
 
-import 'package:app/models/health/workout_model.dart';
+import 'package:routine/models/health/workout_model.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
-import '../models/tasks/task_model.dart';
 
 
 class WorkoutService {
@@ -20,7 +19,7 @@ class WorkoutService {
       List<Exercise> exercises = [];
 
       if (data['data'] != null) {
-        exercises = List<Exercise>.from(data['data'].map((task) => Exercise.fromJson(task)));
+        exercises = List<Exercise>.from(data['data'].map((exe) => Exercise.fromJson(exe)));
       }
 
       return exercises;
@@ -41,7 +40,7 @@ class WorkoutService {
 
       if (data['data'] != null) {
         workouts =
-            List<Workout>.from(data['data'].map((task) => Workout.fromJson(task)));
+            List<Workout>.from(data['data'].map((w) => Workout.fromJson(w)));
       }
 
       return workouts;
