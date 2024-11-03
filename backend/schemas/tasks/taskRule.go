@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"github.com/EduHSilva/routine/schemas"
+	"github.com/EduHSilva/routine/schemas/enums"
 	"gorm.io/gorm"
 	"time"
 )
@@ -9,14 +10,14 @@ import (
 type TaskRule struct {
 	gorm.Model
 	Title      string
-	Frequency  schemas.Frequency
-	Priority   schemas.Priority
+	Frequency  enums.Frequency
+	Priority   enums.Priority
 	DateStart  time.Time
 	DateEnd    time.Time
 	StartTime  string
 	EndTime    string
-	CategoryID uint         `gorm:"not null"`
-	Category   CategoryTask `gorm:"foreignKey:CategoryID"`
-	UserID     uint         `gorm:"not null"`
-	User       schemas.User `gorm:"foreignKey:UserID"`
+	CategoryID uint             `gorm:"not null"`
+	Category   schemas.Category `gorm:"foreignKey:CategoryID"`
+	UserID     uint             `gorm:"not null"`
+	User       schemas.User     `gorm:"foreignKey:UserID"`
 }
