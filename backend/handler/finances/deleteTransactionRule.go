@@ -43,7 +43,7 @@ func DeleteTransactionRuleHandler(ctx *gin.Context) {
 	}
 
 	// Excluir apenas as transações futuras associadas (status != DONE)
-	if err := db.Where("transaction_rule_id = ? AND date > ? AND status != ?", id, time.Now(), "DONE").
+	if err := db.Where("transaction_rule_id = ? AND date > ? AND confirmed = false", id, time.Now()).
 		Delete(&finances.Transaction{}).Error; err != nil {
 		helper.SendError(ctx, http.StatusInternalServerError, err.Error())
 		return
