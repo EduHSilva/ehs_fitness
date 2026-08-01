@@ -1,108 +1,93 @@
-import 'package:flutter/cupertino.dart';
-
 import '../config/app_config.dart';
 import '../models/user/login_model.dart';
 import '../models/user/user_model.dart';
 import '../services/user_service.dart';
+import '../services/professional_workspace_service.dart';
+import 'base_view_model.dart';
 
-class UserViewModel {
-  final UserService _userService = UserService();
-  ValueNotifier<bool> isLoading = ValueNotifier(false);
-  ValueNotifier<String?> errorMessage = ValueNotifier(null);
+class UserViewModel extends BaseViewModel {
+  UserViewModel({UserService? userService})
+      : _userService = userService ?? UserService();
+
+  final UserService _userService;
 
   Future<LoginResponse?> login(String email, String password) async {
-    try {
-      isLoading.value = true;
-      LoginRequest authRequest = LoginRequest(email: email, password: password);
-      LoginResponse? response = await _userService.login(authRequest);
-
-      await AppConfig.saveToken(response?.token);
-      await AppConfig.saveUser(response?.user);
-
-      return response;
-    } catch (e) {
-      errorMessage.value = "Error on login";
-      AppConfig.getLogger().e(e);
-    } finally {
-      isLoading.value = false;
+    final response = await execute(
+      () => _userService.login(LoginRequest(email: email, password: password)),
+      failureMessage: 'Error on login',
+    );
+    if (response != null) {
+      await AppConfig.saveToken(response.token);
+      await AppConfig.saveUser(response.user);
+      await _saveProfessionalRole(response.user?.accountRole);
     }
-    return null;
+    return response;
   }
 
-  Future<LoginResponse?> loginWithGoogle(String email, String googleAccountId) async {
-    try {
-      isLoading.value = true;
-      final response = await _userService.login(
+  Future<LoginResponse?> loginWithGoogle(
+      String email, String googleAccountId) async {
+    final response = await execute(
+      () => _userService.login(
         LoginRequest(email: email, idContaGoogle: googleAccountId),
-      );
-      await AppConfig.saveToken(response?.token);
-      await AppConfig.saveUser(response?.user);
-      return response;
-    } catch (e) {
-      errorMessage.value = 'Error on Google login';
-      AppConfig.getLogger().e(e);
-    } finally {
-      isLoading.value = false;
+      ),
+      failureMessage: 'Error on Google login',
+    );
+    if (response != null) {
+      await AppConfig.saveToken(response.token);
+      await AppConfig.saveUser(response.user);
+      await _saveProfessionalRole(response.user?.accountRole);
     }
-    return null;
+    return response;
+  }
+
+  Future<void> _saveProfessionalRole(String? role) async {
+    final normalizedRole = role?.toLowerCase();
+    if (normalizedRole == 'pj' ||
+        normalizedRole == 'professional' ||
+        normalizedRole == 'personal_trainer') {
+      await ProfessionalWorkspaceService.saveRole('personal_trainer');
+    } else if (normalizedRole == 'nutritionist') {
+      await ProfessionalWorkspaceService.saveRole('nutritionist');
+    }
   }
 
   Future<UserResponse?> register(
-      String name, String email, String password) async {
-    try {
-      isLoading.value = true;
-
-      CreateUserRequest createUserRequest =
-          CreateUserRequest(name: name, email: email, password: password);
-      UserResponse? response = await _userService.register(createUserRequest);
-
-      return response;
-    } catch (e) {
-      errorMessage.value = "Error on register";
-      AppConfig.getLogger().e(e);
-    } finally {
-      isLoading.value = false;
-    }
-    return null;
+      String name, String email, String password, String accountRole) async {
+    return execute<UserResponse?>(
+      () => _userService.register(
+        CreateUserRequest(
+            name: name,
+            email: email,
+            password: password,
+            accountRole: accountRole),
+      ),
+      failureMessage: 'Error on register',
+    );
   }
 
   Future<UserResponse?> getUser(String id) async {
-    try {
-      isLoading.value = true;
-
-      UserResponse? response = await _userService.getUser(id);
-
-      if (response?.user == null) {
-        errorMessage.value = response?.message;
-      }
-
-      return response;
-    } catch (e) {
-      AppConfig.getLogger().e(e);
-    } finally {
-      isLoading.value = false;
+    final response = await execute(
+      () => _userService.getUser(id),
+      failureMessage: 'Error fetching user',
+    );
+    if (response?.user == null && response?.message != null) {
+      errorMessage.value = response!.message;
     }
-    return null;
+    return response;
   }
 
   Future<UserResponse?> updateUser(
       String id, String name, String email, String? photo) async {
-    try {
-      isLoading.value = true;
-
-      UpdateUserRequest userRequest =
-          UpdateUserRequest(name: name, email: email, photo: photo);
-      UserResponse? response = await _userService.updateUser(userRequest, id);
-      if (response?.user != null) {
-        AppConfig.saveUser(response?.user);
-      }
-      return response;
-    } catch (e) {
-      errorMessage.value = "Error on update user";
-      AppConfig.getLogger().e(e);
-    } finally {
-      isLoading.value = false;
+    final response = await execute(
+      () => _userService.updateUser(
+        UpdateUserRequest(name: name, email: email, photo: photo),
+        id,
+      ),
+      failureMessage: 'Error on update user',
+    );
+    if (response?.user != null) {
+      await AppConfig.saveUser(response!.user);
     }
-    return null;
+    return response;
   }
 }

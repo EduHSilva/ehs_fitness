@@ -1,27 +1,26 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
 import '../models/health/workout_model.dart';
 import '../services/workout_service.dart';
+import 'base_view_model.dart';
 
-class WorkoutViewModel {
-  final WorkoutService _workoutService = WorkoutService();
-  ValueNotifier<bool> isLoading = ValueNotifier(false);
-  ValueNotifier<String?> errorMessage = ValueNotifier(null);
-  ValueNotifier<List<Exercise>> exercises = ValueNotifier([]);
-  ValueNotifier<List<Workout>> workouts = ValueNotifier([]);
+class WorkoutViewModel extends BaseViewModel {
+  WorkoutViewModel({WorkoutService? workoutService})
+      : _workoutService = workoutService ?? WorkoutService();
+
+  final WorkoutService _workoutService;
+  final exercises = ValueNotifier<List<Exercise>>([]);
+  final workouts = ValueNotifier<List<Workout>>([]);
 
   Future<void> fetchExercises() async {
-    try {
-      exercises.value = [];
-      isLoading.value = true;
-      List<Exercise> response = await _workoutService.fetchExercises();
+    exercises.value = [];
+    final response = await execute(
+      _workoutService.fetchExercises,
+      failureMessage: 'Error fetching exercises',
+    );
+    if (response != null) {
       exercises.value = response;
-    } catch (e) {
-      errorMessage.value = "Error fetching exercises";
-      AppConfig.getLogger().e(e);
-    } finally {
-      isLoading.value = false;
     }
   }
 
@@ -45,15 +44,12 @@ class WorkoutViewModel {
 
   Future<void> fetchWorkouts() async {
     workouts.value = [];
-    try {
-      isLoading.value = true;
-      List<Workout> response = await _workoutService.fetchWorkouts();
+    final response = await execute(
+      _workoutService.fetchWorkouts,
+      failureMessage: 'Error fetching workouts',
+    );
+    if (response != null) {
       workouts.value = response;
-    } catch (e) {
-      errorMessage.value = "Error fetching workoutss";
-      AppConfig.getLogger().e(e);
-    } finally {
-      isLoading.value = false;
     }
   }
 
@@ -79,8 +75,7 @@ class WorkoutViewModel {
   Future<WorkoutResponse?> addWorkout(CreateWorkoutRequest request) async {
     try {
       isLoading.value = true;
-      WorkoutResponse? response =
-      await _workoutService.addWorkout(request);
+      WorkoutResponse? response = await _workoutService.addWorkout(request);
       if (response?.workout != null) {
         await fetchWorkouts();
       } else {

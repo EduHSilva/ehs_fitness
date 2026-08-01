@@ -114,7 +114,8 @@ class _ExerciseModalState extends State<ExerciseModal> {
                         subtitle: exercise.bodyPart?.toLowerCase().tr() ==
                                 exercise.target?.toLowerCase().tr()
                             ? Text('${exercise.bodyPart?.toLowerCase()}'.tr())
-                            : Text("${'${exercise.bodyPart?.toLowerCase()}'.tr()} - ${'${exercise.target?.toLowerCase()}'.tr()}"),
+                            : Text(
+                                "${'${exercise.bodyPart?.toLowerCase()}'.tr()} - ${'${exercise.target?.toLowerCase()}'.tr()}"),
                         trailing: IconButton(
                           icon: Icon(isSelected ? Icons.remove : Icons.add),
                           onPressed: () {

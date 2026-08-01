@@ -1,38 +1,74 @@
-# Repository Guidelines
+# EHS Fitness — Guia do Repositório
 
-## Project Structure & Module Organization
-This repository contains a routine-management Flutter app and Go API.
+## Visão geral
 
-- `app/` is the Flutter client. Dart code lives in `app/lib/`, grouped by `views/`, `view_models/`, `services/`, `models/`, `widgets/`, and `config/`.
-- `app/assets/i18n/` and `app/assets/images/` contain bundled translations and images listed in `pubspec.yaml`.
-- `backend/` is the Go service. `main.go` starts the API; `router/` wires routes, `handler/` contains feature handlers, `schemas/` defines data models, and `config/` holds setup code.
-- `backend/docs/` contains generated Swagger files. `backend/seeds/` stores seed scripts and JSON data. Root `imgs/` stores README screenshots and demo media.
+O repositório contém dois clientes para o EHS Fitness:
 
-## Build, Test, and Development Commands
-From `app/`:
+- `app/`: aplicativo Flutter.
+- `web/`: aplicação web Nuxt 4 / Vue 3.
 
-- `flutter pub get` installs Dart dependencies.
-- `flutter run` starts the mobile app.
-- `flutter analyze` runs Flutter lint checks.
-- `flutter test` runs Flutter tests when test files are present.
+Não há código de backend neste repositório. Os dois clientes usam a URL configurada por ambiente para consumir a API externa.
 
-From `backend/`:
+## Flutter (`app/`)
 
-- `go mod tidy` synchronizes Go dependencies.
-- `make` or `make run-with-docs` runs `swag init`, then starts the API.
-- `make run` starts the API without regenerating docs.
-- `make build` builds the `go-routine` binary.
-- `make test` runs `go test ./...`.
-- `make docs` regenerates Swagger only.
+- Código-fonte: `app/lib/`.
+- Organização: `config/`, `models/`, `services/`, `view_models/`, `views/` e `widgets/`.
+- Recursos: `app/assets/i18n/` e `app/assets/images/`.
+- Configuração local: `app/.env`, com `URL_API`.
 
-## Coding Style & Naming Conventions
-Use `gofmt` for Go and keep package names short and lowercase. Backend handler files use feature folders plus action names, for example `handler/tasks/createTaskRule.go`; follow that pattern for endpoints. Dart follows `flutter_lints`; use `snake_case.dart` filenames, `PascalCase` classes, and `camelCase` members. Keep shared UI in `app/lib/widgets/` and API calls in `app/lib/services/`.
+Comandos, executados em `app/`:
 
-## Testing Guidelines
-Backend tests should be Go `*_test.go` files near the package under test and pass with `make test`. Flutter tests should live under `app/test/` as `*_test.dart` and run with `flutter test`. Add focused tests for new handlers, services, parsing logic, and view models; document manual mobile checks in the pull request.
+```bash
+flutter pub get
+flutter run
+flutter analyze
+flutter test
+```
 
-## Commit & Pull Request Guidelines
-Recent commits are short and informal, such as `fixes` and `Update README.md`. Keep future subjects concise but more specific, for example `fix task status update` or `add meal search validation`. Pull requests should include a summary, test results (`make test`, `flutter analyze`, `flutter test` as relevant), linked issues, and screenshots or recordings for UI changes.
+Use `flutter_lints`, nomes de arquivos em `snake_case.dart`, classes em `PascalCase` e membros em `camelCase`. Mantenha chamadas à API em `services/` e componentes compartilhados em `widgets/`.
 
-## Security & Configuration Tips
-Do not commit `.env` files or secrets; they are ignored by `.gitignore`. Backend configuration belongs in `backend/.env`, and frontend configuration belongs in `app/.env`. Keep GPT, Nutritionix, exercises, PostgreSQL, and Supabase keys outside source control.
+## Web (`web/`)
+
+- Rotas e composição visual: `web/app/pages/`.
+- Componentes visuais compartilhados: `web/app/components/`.
+- Infraestrutura compartilhada, como cliente autenticado: `web/app/composables/`.
+- Tipos transversais: `web/app/types/`.
+- Funcionalidades de domínio: `web/app/features/<domínio>/`.
+- Proxy da API: `web/server/api/[...path].ts`.
+- Configuração local: `web/.env`, com `URL_API`.
+
+Cada domínio web segue esta estrutura:
+
+```text
+features/<domínio>/
+  types.ts             # modelos do domínio
+  <domínio>.api.ts     # contrato e chamadas HTTP
+  use<Domínio>.ts      # estado, validações e casos de uso da tela
+  *.repository.ts      # somente persistência local intencional
+```
+
+Regras para Vue/Nuxt:
+
+- Páginas não devem conter chamadas HTTP, tipos de domínio, acesso a `localStorage`, transformação de payload ou regras de negócio.
+- Chamadas HTTP ficam em `*.api.ts`; estado, validação e tratamento de carregamento/erro ficam em `use<Domínio>.ts`.
+- Não use mocks persistidos no navegador para simular recursos da API. Se o contrato ainda não estiver disponível, crie a função de integração, marque o ponto com `TODO` e apresente o erro ao usuário.
+- O armazenamento local de token e usuário autenticado é permitido como persistência de sessão, não como fonte de dados de domínio.
+
+Comandos, executados em `web/`:
+
+```bash
+pnpm dev
+pnpm lint
+pnpm typecheck
+pnpm build
+pnpm preview
+```
+
+O projeto declara `pnpm@11.9.0`. Use ESLint antes de entregar alterações web. Caso `typecheck` falhe por dependências ausentes ou incompatíveis, registre a falha e não a contorne alterando tipos sem necessidade.
+
+## Qualidade e mudanças
+
+- Adicione testes focados ao introduzir lógica nova: `*_test.dart` em Flutter e testes para composables/serviços no web quando a infraestrutura estiver disponível.
+- Preserve alterações não relacionadas já presentes no diretório de trabalho.
+- Não versione `.env`, tokens ou outras credenciais.
+- Prefira commits curtos e específicos, por exemplo `refactor workout web feature`.

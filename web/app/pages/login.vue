@@ -20,13 +20,18 @@ async function submit() {
 
   loading.value = true
   try {
-    const response = await $fetch<{ data?: { token?: string }, message?: string }>(`${String(config.public.apiUrl).replace(/\/$/, '')}/users/auth/login`, {
+    const response = await $fetch<{ data?: { token?: string, user?: Record<string, unknown> }, message?: string }>('/api/users/auth/login', {
       method: 'POST',
       body: { email: email.value.trim(), password: password.value }
     })
     if (!response.data?.token) throw new Error(response.message || 'Não foi possível entrar com estas credenciais.')
     localStorage.setItem('user_token', response.data.token)
-    localStorage.setItem('user', JSON.stringify(response.data))
+    localStorage.setItem('user', JSON.stringify(response.data?.user || {}))
+    const loggedUser = response.data?.user || {}
+    const role = String(loggedUser.role || loggedUser.account_type || loggedUser.type || '').toLowerCase()
+    if (loggedUser.is_pj === true || loggedUser.person_type === 'pj' || ['pj', 'personal_trainer', 'nutritionist', 'professional'].includes(role)) {
+      localStorage.setItem('fitness_account_role', role === 'nutritionist' ? 'nutritionist' : 'personal_trainer')
+    }
     if (!keepConnected.value) sessionStorage.setItem('session_only', 'true')
     else sessionStorage.removeItem('session_only')
     await navigateTo('/home')
@@ -127,7 +132,7 @@ useSeoMeta({ title: 'Entrar — EHS Fitness' })
           </p>
         </form>
         <p class="signup-text">
-          Ainda não tem uma conta? <a href="#">Crie gratuitamente</a>
+          Ainda não tem uma conta? <NuxtLink to="/register">Crie gratuitamente</NuxtLink>
         </p>
       </div>
     </section>

@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/design_system.dart';
 import '../../config/helper.dart';
 import '../../models/user/user_model.dart';
@@ -24,7 +25,7 @@ class RegisterViewState extends State<RegisterView> {
   final _passwordConfirmController = TextEditingController();
 
   final UserViewModel _userViewModel = UserViewModel();
-
+  String _accountRole = 'student';
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
@@ -63,25 +64,26 @@ class RegisterViewState extends State<RegisterView> {
       return;
     }
 
-    UserResponse? response = await _userViewModel.register(
-        _nameController.text, _emailController.text, _passwordController.text);
+    UserResponse? response = await _userViewModel.register(_nameController.text,
+        _emailController.text, _passwordController.text, _accountRole);
 
     _handleResponse(response);
   }
 
-
   _handleResponse(UserResponse? response) {
     if (response?.user != null) {
+      SharedPreferences.getInstance().then(
+          (prefs) => prefs.setString('fitness_account_role', _accountRole));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('success'.tr()),
           action: SnackBarAction(
               label: 'login'.tr(),
               onPressed: () => {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const LoginView(),
-                ))
-              }),
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const LoginView(),
+                    ))
+                  }),
         ),
       );
     } else {
@@ -134,6 +136,25 @@ class RegisterViewState extends State<RegisterView> {
                         labelText: 'password',
                         controller: _passwordController,
                         validator: _validatePassword,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: _accountRole,
+                        decoration: const InputDecoration(
+                            labelText: 'Como você usará o app?'),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'student',
+                              child: Text('Aluno / praticante')),
+                          DropdownMenuItem(
+                              value: 'personal_trainer',
+                              child: Text('Personal trainer')),
+                          DropdownMenuItem(
+                              value: 'nutritionist',
+                              child: Text('Professor / nutricionista')),
+                        ],
+                        onChanged: (role) =>
+                            setState(() => _accountRole = role ?? 'student'),
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(

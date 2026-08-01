@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../config/app_config.dart';
@@ -16,25 +17,87 @@ class WorkoutPlanView extends StatefulWidget {
 
 class _WorkoutPlanViewState extends State<WorkoutPlanView> {
   final _viewModel = WorkoutViewModel();
-  final Map<int, Workout?> _workoutByDay = {for (var day = 1; day <= 7; day++) day: null};
+  final Map<int, Workout?> _workoutByDay = {
+    for (var day = 1; day <= 7; day++) day: null,
+  };
   bool _saving = false;
-  static const _weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+  bool _loadingPlan = true;
+  static const _weekdayKeys = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+  ];
 
   @override
-  void initState() { super.initState(); _viewModel.fetchWorkouts(); }
-  @override
-  void dispose() { super.dispose(); }
+  void initState() {
+    super.initState();
+    _loadPlan();
+  }
+
+  Future<void> _loadPlan() async {
+    try {
+      final results = await Future.wait([
+        _viewModel.fetchWorkouts(),
+        _fetchSavedPlan(),
+      ]);
+      final savedWorkoutIds = results[1] as Map<int, int?>;
+      final workouts = _viewModel.workouts.value;
+
+      for (final entry in savedWorkoutIds.entries) {
+        final workoutId = entry.value;
+        if (workoutId == null) continue;
+        for (final workout in workouts) {
+          if (workout.id == workoutId) {
+            _workoutByDay[entry.key] = workout;
+            break;
+          }
+        }
+      }
+    } catch (_) {
+      // The workout library remains available for a first-time plan.
+    } finally {
+      if (mounted) setState(() => _loadingPlan = false);
+    }
+  }
+
+  Future<Map<int, int?>> _fetchSavedPlan() async {
+    final client = await AppConfig.getHttpClient();
+    final response = await client.get(
+      Uri.parse('${AppConfig.apiUrl}/fitness/workouts/week'),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Unable to load workout plan');
+    }
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = body['data'] ?? body;
+    final days = data is List
+        ? data
+        : data is Map<String, dynamic>
+            ? data['days'] as List? ?? []
+            : <dynamic>[];
+
+    return {
+      for (final item in days)
+        if (item is Map<String, dynamic> && item['dayOfWeek'] is num)
+          (item['dayOfWeek'] as num).toInt():
+              (item['workoutId'] as num?)?.toInt(),
+    };
+  }
 
   Future<void> _save() async {
     setState(() => _saving = true);
     final days = List.generate(7, (index) {
-          final dayOfWeek = index + 1;
-          return {
-            'dayOfWeek': dayOfWeek,
-            'workoutId': _workoutByDay[dayOfWeek]?.id,
-          };
-        })
-        .toList();
+      final dayOfWeek = index + 1;
+      return {
+        'dayOfWeek': dayOfWeek,
+        'workoutId': _workoutByDay[dayOfWeek]?.id,
+      };
+    });
     try {
       final client = await AppConfig.getHttpClient();
       final response = await client.put(
@@ -42,53 +105,124 @@ class _WorkoutPlanViewState extends State<WorkoutPlanView> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'days': days}),
       );
-      if (response.statusCode < 200 || response.statusCode >= 300) throw Exception();
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception();
+      }
       if (mounted) Navigator.pop(context);
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Não foi possível salvar o plano.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nao foi possivel salvar o plano.')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
+  void _clearPlan() {
+    setState(() {
+      for (var day = 1; day <= 7; day++) {
+        _workoutByDay[day] = null;
+      }
+    });
+  }
+
+  Future<void> _confirmClearPlan() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Limpar plano'),
+        content: const Text(
+          'Remover todos os treinos deste plano? Salve depois para aplicar a alteracao.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('cancel'.tr()),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Limpar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) _clearPlan();
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Criar plano manual')),
-    body: ValueListenableBuilder<bool>(
-      valueListenable: _viewModel.isLoading,
-      builder: (context, loading, _) {
-        if (loading) return const Center(child: CircularProgressIndicator());
-        return ValueListenableBuilder<List<Workout>>(
-          valueListenable: _viewModel.workouts,
-          builder: (context, workouts, _) => ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Text('Distribua seus treinos nos dias da semana.', style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 16),
-              ...List.generate(7, (index) {
-                final day = index + 1;
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    child: DropdownButtonFormField<Workout?>(
-                      value: _workoutByDay[day],
-                      decoration: InputDecoration(labelText: _weekdays[index], border: InputBorder.none),
-                      hint: const Text('Dia de descanso'),
-                      items: [
-                        const DropdownMenuItem<Workout?>(value: null, child: Text('Dia de descanso')),
-                        ...workouts.map((workout) => DropdownMenuItem(value: workout, child: Text(workout.name))),
-                      ],
-                      onChanged: (workout) => setState(() => _workoutByDay[day] = workout),
-                    ),
+        appBar: AppBar(
+          title: const Text('Editar plano'),
+          actions: [
+            TextButton.icon(
+              onPressed: _saving ? null : _confirmClearPlan,
+              icon: const Icon(Icons.clear_all),
+              label: const Text('Limpar'),
+            ),
+          ],
+        ),
+        body: ValueListenableBuilder<bool>(
+          valueListenable: _viewModel.isLoading,
+          builder: (context, loading, _) {
+            if (loading || _loadingPlan) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return ValueListenableBuilder<List<Workout>>(
+              valueListenable: _viewModel.workouts,
+              builder: (context, workouts, _) => ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    'Distribua seus treinos nos dias da semana.',
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
-                );
-              }),
-              const SizedBox(height: 20),
-              FilledButton.icon(onPressed: _saving ? null : _save, icon: const Icon(Icons.save_outlined), label: Text(_saving ? 'Salvando...' : 'Salvar plano')),
-            ],
-          ),
-        );
-      },
-    ),
-  );
+                  const SizedBox(height: 16),
+                  ...List.generate(7, (index) {
+                    final day = index + 1;
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        child: DropdownButtonFormField<Workout?>(
+                          initialValue: _workoutByDay[day],
+                          decoration: InputDecoration(
+                            labelText: _weekdayKeys[index].tr(),
+                            border: InputBorder.none,
+                          ),
+                          hint: const Text('Dia de descanso'),
+                          items: [
+                            const DropdownMenuItem<Workout?>(
+                              value: null,
+                              child: Text('Dia de descanso'),
+                            ),
+                            ...workouts.map(
+                              (workout) => DropdownMenuItem(
+                                value: workout,
+                                child: Text(workout.name),
+                              ),
+                            ),
+                          ],
+                          onChanged: (workout) {
+                            setState(() => _workoutByDay[day] = workout);
+                          },
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    icon: const Icon(Icons.save_outlined),
+                    label: Text(_saving ? 'Salvando...' : 'Salvar plano'),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
 }

@@ -1,4 +1,3 @@
-import '../../config/app_config.dart';
 import '../response.dart';
 
 class Workout {
@@ -42,19 +41,18 @@ class Exercise {
   late String? notes;
   final String? target;
 
-  Exercise({
-    required this.id,
-    required this.name,
-    this.bodyPart,
-    required this.instructions,
-    this.load,
-    this.restSeconds,
-    this.series,
-    this.repetitions,
-    this.imageUrl,
-    this.notes,
-    this.target
-  });
+  Exercise(
+      {required this.id,
+      required this.name,
+      this.bodyPart,
+      required this.instructions,
+      this.load,
+      this.restSeconds,
+      this.series,
+      this.repetitions,
+      this.imageUrl,
+      this.notes,
+      this.target});
 
   Map<String, dynamic> toJson() {
     return {
@@ -102,7 +100,6 @@ class WorkoutResponse extends DefaultResponse {
 class CreateWorkoutRequest {
   final String name;
   final List<Exercise> exercises;
-  final String userID = AppConfig.user!.id;
 
   CreateWorkoutRequest({required this.name, required this.exercises});
 }

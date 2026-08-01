@@ -16,20 +16,19 @@ class CustomTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? initialValue;
 
-  const CustomTextField({
-    super.key,
-    this.labelText,
-    this.prefixIcon,
-    this.isPassword = false,
-    this.controller,
-    this.validator,
-    this.readOnly = false,
-    this.onTap,
-    this.enable = true,
-    this.onChanged,
-    this.initialValue,
-    this.keyboardType
-  });
+  const CustomTextField(
+      {super.key,
+      this.labelText,
+      this.prefixIcon,
+      this.isPassword = false,
+      this.controller,
+      this.validator,
+      this.readOnly = false,
+      this.onTap,
+      this.enable = true,
+      this.onChanged,
+      this.initialValue,
+      this.keyboardType});
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +39,7 @@ class CustomTextField extends StatelessWidget {
       enabled: enable,
       initialValue: initialValue,
       keyboardType: keyboardType,
-      onTap: readOnly && onTap != null
-          ? () async => await onTap!()
-          : null,
+      onTap: readOnly && onTap != null ? () async => await onTap!() : null,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: labelText?.tr(),
@@ -53,14 +50,11 @@ class CustomTextField extends StatelessWidget {
         fillColor: AppColors.surface,
         prefixIcon: prefixIcon != null
             ? Icon(
-          prefixIcon,
-          color: AppColors.primaryVariant,
-        )
+                prefixIcon,
+                color: AppColors.primaryVariant,
+              )
             : null,
-
-        contentPadding:
-        const EdgeInsets.symmetric(
-            vertical: 12, horizontal: 8),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(

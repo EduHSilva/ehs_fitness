@@ -6,10 +6,14 @@ import '../models/home_settings.dart';
 class HomeSettingsService {
   Future<HomeSettings> fetch() async {
     final client = await AppConfig.getHttpClient();
-    final response = await client.get(Uri.parse('${AppConfig.apiUrl}/fitness/config/user'));
-    if (response.statusCode < 200 || response.statusCode >= 300) throw Exception('Unable to load fitness settings');
+    final response =
+        await client.get(Uri.parse('${AppConfig.apiUrl}/fitness/config/user'));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Unable to load fitness settings');
+    }
     final body = jsonDecode(response.body) as Map<String, dynamic>;
-    return HomeSettings.fromJson((body['data'] ?? body) as Map<String, dynamic>);
+    return HomeSettings.fromJson(
+        (body['data'] ?? body) as Map<String, dynamic>);
   }
 
   Future<void> save(HomeSettings settings) async {
@@ -19,7 +23,9 @@ class HomeSettingsService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(settings.toApiJson()),
     );
-    if (response.statusCode < 200 || response.statusCode >= 300) throw Exception('Unable to save fitness settings');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Unable to save fitness settings');
+    }
   }
 
   Future<void> saveTodayHistory({
@@ -35,5 +41,21 @@ class HomeSettingsService {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Unable to save daily history');
     }
+  }
+
+  Future<HomeDailyHistory?> fetchTodayHistory() async {
+    final client = await AppConfig.getHttpClient();
+    final response = await client.get(
+      Uri.parse('${AppConfig.apiUrl}/fitness/config/history'),
+    );
+    if (response.statusCode == 404 || response.body.isEmpty) return null;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Unable to load daily history');
+    }
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = body['data'] ?? body;
+    if (data is! Map<String, dynamic>) return null;
+    return HomeDailyHistory.fromJson(data);
   }
 }

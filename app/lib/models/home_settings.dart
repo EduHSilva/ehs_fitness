@@ -15,7 +15,8 @@ class HomeSettings {
         dailyCardioMinutes: (json['dailyCardio'] as num?)?.toInt() ??
             (json['dailyCardioMinutes'] as num?)?.toInt() ??
             0,
-        weeklyCardioMinutes: (json['weeklyCardioMinutes'] as num?)?.toInt() ?? 0,
+        weeklyCardioMinutes:
+            (json['weeklyCardioMinutes'] as num?)?.toInt() ?? 0,
         creatineEnabled:
             (json['showCreatine'] ?? json['creatineEnabled']) != false,
       );
@@ -30,4 +31,19 @@ class HomeSettings {
         'showCreatine': creatineEnabled,
         'dailyCardio': dailyCardioMinutes,
       };
+}
+
+class HomeDailyHistory {
+  const HomeDailyHistory({required this.creatine, required this.cardio});
+
+  final bool creatine;
+  final int cardio;
+
+  factory HomeDailyHistory.fromJson(Map<String, dynamic> json) =>
+      HomeDailyHistory(
+        creatine: json['creatine'] == true,
+        cardio: (json['cardio'] as num?)?.toInt() ??
+            (json['cardioMinutes'] as num?)?.toInt() ??
+            0,
+      );
 }

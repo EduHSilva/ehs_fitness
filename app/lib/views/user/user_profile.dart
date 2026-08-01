@@ -59,13 +59,17 @@ class _UserProfileViewState extends State<UserProfileView> {
 
   Future<void> _chooseImage(ImageSource source) async {
     final picked = await _picker.pickImage(source: source, imageQuality: 80);
-    if (picked == null) return;
+    if (picked == null) {
+      return;
+    }
     final image = File(picked.path);
     final encoded = base64Encode(await image.readAsBytes());
-    if (mounted) setState(() {
-      _imageFile = image;
-      _imageBase64 = encoded;
-    });
+    if (mounted) {
+      setState(() {
+        _imageFile = image;
+        _imageBase64 = encoded;
+      });
+    }
   }
 
   Future<void> _save() async {
@@ -79,37 +83,39 @@ class _UserProfileViewState extends State<UserProfileView> {
     );
     if (!mounted) return;
     setState(() => _saving = false);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
-      response?.user != null ? 'Perfil atualizado.' : (response?.message
-          .isNotEmpty ?? false)
-          ? response!.message
-          : 'Não foi possível atualizar o perfil.',
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+      response?.user != null
+          ? 'Perfil atualizado.'
+          : (response?.message.isNotEmpty ?? false)
+              ? response!.message
+              : 'Não foi possível atualizar o perfil.',
     )));
   }
 
-  void _showPhotoOptions() =>
-      showModalBottomSheet<void>(
+  void _showPhotoOptions() => showModalBottomSheet<void>(
         context: context,
-        builder: (sheetContext) =>
-            SafeArea(child: Wrap(children: [
-              ListTile(leading: const Icon(Icons.photo_library_outlined),
-                  title: const Text('Escolher da galeria'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _chooseImage(ImageSource.gallery);
-                  }),
-              ListTile(leading: const Icon(Icons.camera_alt_outlined),
-                  title: const Text('Usar câmera'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _chooseImage(ImageSource.camera);
-                  }),
-            ])),
+        builder: (sheetContext) => SafeArea(
+            child: Wrap(children: [
+          ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Escolher da galeria'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _chooseImage(ImageSource.gallery);
+              }),
+          ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Usar câmera'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _chooseImage(ImageSource.camera);
+              }),
+        ])),
       );
 
   @override
-  Widget build(BuildContext context) =>
-      Scaffold(
+  Widget build(BuildContext context) => Scaffold(
         appBar: const CustomAppBar(title: 'Perfil'),
         body: SafeArea(
           child: Form(
@@ -117,40 +123,48 @@ class _UserProfileViewState extends State<UserProfileView> {
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                Center(child: Stack(children: [
-                  CircleAvatar(radius: 56,
-                      backgroundImage: _imageFile == null ? const AssetImage(
-                          'assets/images/profile.png') : FileImage(
-                          _imageFile!)),
-                  Positioned(right: 0,
+                Center(
+                    child: Stack(children: [
+                  CircleAvatar(
+                      radius: 56,
+                      backgroundImage: _imageFile == null
+                          ? const AssetImage('assets/images/profile.png')
+                          : FileImage(_imageFile!)),
+                  Positioned(
+                      right: 0,
                       bottom: 0,
-                      child: IconButton.filled(tooltip: 'Alterar foto',
+                      child: IconButton.filled(
+                          tooltip: 'Alterar foto',
                           onPressed: _showPhotoOptions,
                           icon: const Icon(Icons.edit))),
                 ])),
                 const SizedBox(height: 32),
-                TextFormField(controller: _nameController,
+                TextFormField(
+                    controller: _nameController,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(labelText: 'Nome',
+                    decoration: const InputDecoration(
+                        labelText: 'Nome',
                         prefixIcon: Icon(Icons.person_outline)),
-                    validator: (value) =>
-                    value == null || value
-                        .trim()
-                        .isEmpty ? 'Informe seu nome.' : null),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Informe seu nome.'
+                        : null),
                 const SizedBox(height: 16),
-                TextFormField(controller: _emailController,
+                TextFormField(
+                    controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(labelText: 'E-mail',
+                    decoration: const InputDecoration(
+                        labelText: 'E-mail',
                         prefixIcon: Icon(Icons.email_outlined)),
-                    validator: (value) =>
-                    value == null || !value.contains('@')
+                    validator: (value) => value == null || !value.contains('@')
                         ? 'Informe um e-mail válido.'
                         : null),
                 const SizedBox(height: 28),
-                FilledButton.icon(onPressed: _saving ? null : _save,
+                FilledButton.icon(
+                    onPressed: _saving ? null : _save,
                     icon: _saving
-                        ? const SizedBox.square(dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.save_outlined),
                     label: const Text('Salvar alterações')),
               ],

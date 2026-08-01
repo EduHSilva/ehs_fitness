@@ -38,7 +38,7 @@ Color hexaToColor(String? hexColor) {
   }
   try {
     return Color(int.parse(hexColor, radix: 16));
-  } catch(e) {
+  } catch (e) {
     return Colors.transparent;
   }
 }
@@ -51,7 +51,7 @@ String colorToHexa(Color color) {
 String formatDate(String? date) {
   if (date == null) return "";
   DateTime dateTime = DateTime.parse(date).toUtc();
-  if(dateTime.year == 0000) {
+  if (dateTime.year == 0000) {
     return "-";
   }
   return '${dateTime.day}/${dateTime.month}/${dateTime.year}';

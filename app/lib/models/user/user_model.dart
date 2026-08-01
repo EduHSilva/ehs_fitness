@@ -6,13 +6,15 @@ class User {
   final String email;
   final String lastLogin;
   final String? photo;
+  final String? accountRole;
 
   User(
       {required this.id,
       required this.name,
       required this.email,
       required this.lastLogin,
-      this.photo});
+      this.photo,
+      this.accountRole});
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -20,7 +22,9 @@ class User {
         name: (json['username'] ?? json['name'])?.toString() ?? '',
         email: json['email']?.toString() ?? '',
         lastLogin: json['lastLogin']?.toString() ?? '',
-        photo: json['photo']?.toString());
+        photo: json['photo']?.toString(),
+        accountRole:
+            (json['account_role'] ?? json['role'] ?? json['type'])?.toString());
   }
 
   Map<String, dynamic> toJson() {
@@ -29,7 +33,8 @@ class User {
       'name': name,
       'email': email,
       'lastLogin': lastLogin,
-      'photo': photo
+      'photo': photo,
+      'account_role': accountRole,
     };
   }
 }
@@ -55,12 +60,20 @@ class CreateUserRequest {
   final String name;
   final String email;
   final String password;
+  final String? accountRole;
 
   CreateUserRequest(
-      {required this.name, required this.email, required this.password});
+      {required this.name,
+      required this.email,
+      required this.password,
+      this.accountRole});
 
-  Map<String, String> toJson() =>
-      {'name': name, 'email': email, 'password': password};
+  Map<String, String> toJson() => {
+        'name': name,
+        'email': email,
+        'password': password,
+        if (accountRole != null) 'account_role': accountRole!
+      };
 }
 
 class UpdateUserRequest {

@@ -1,10 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
-
 import '../../../config/helper.dart';
 import '../../../config/app_config.dart';
-import '../../../config/pdf.dart';
 import '../../../models/health/diet_model.dart';
 import '../../../view_models/diet_viewmodel.dart';
 import '../../../widgets/custom_modal_delete.dart';
@@ -105,47 +103,62 @@ class DietTabState extends State<DietTab> {
                 ],
               ),
               body: Column(children: [
-                if (offline) const MaterialBanner(content: Text('Modo offline: exibindo a última dieta salva. Alterações estão indisponíveis.'), actions: []),
-                Expanded(child: meals.isEmpty
-                  ? Center(child: Text('noData'.tr()))
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                      child: ListView.builder(
-                        itemCount: meals.length,
-                        itemBuilder: (context, index) {
-                          Meal meal = meals[index];
+                if (offline)
+                  const MaterialBanner(
+                      content: Text(
+                          'Modo offline: exibindo a última dieta salva. Alterações estão indisponíveis.'),
+                      actions: []),
+                Expanded(
+                    child: meals.isEmpty
+                        ? Center(child: Text('noData'.tr()))
+                        : Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 10.0),
+                            child: ListView.builder(
+                              itemCount: meals.length,
+                              itemBuilder: (context, index) {
+                                Meal meal = meals[index];
 
-                          return MealCard(
-                            id: meal.id,
-                            name: meal.name,
-                            hour: meal.hour,
-                            onTap: offline ? null : () => _showDetails(meal.id),
-                            onCreateSubstitution: offline ? null : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => NewMealView(
-                                    substitutionFor: meal,
-                                  ),
-                                ),
-                              );
-                            },
-                            onEdit: offline ? null : () => _editMeal(meal.id),
-                            onRemove: offline ? null : () => _deleteMealDialog(meal),
-                          );
-                        },
-                      ),
-                    )),
+                                return MealCard(
+                                  id: meal.id,
+                                  name: meal.name,
+                                  hour: meal.hour,
+                                  onTap: offline
+                                      ? null
+                                      : () => _showDetails(meal.id),
+                                  onCreateSubstitution: offline
+                                      ? null
+                                      : () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => NewMealView(
+                                                substitutionFor: meal,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                  onEdit:
+                                      offline ? null : () => _editMeal(meal.id),
+                                  onRemove: offline
+                                      ? null
+                                      : () => _deleteMealDialog(meal),
+                                );
+                              },
+                            ),
+                          )),
               ]),
               floatingActionButton: FloatingActionButton(
-                onPressed: offline ? null : () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const NewMealView(),
-                    ),
-                  );
-                },
+                onPressed: offline
+                    ? null
+                    : () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NewMealView(),
+                          ),
+                        );
+                      },
                 child: Icon(Icons.add),
               ),
             );

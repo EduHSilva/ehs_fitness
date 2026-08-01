@@ -9,11 +9,12 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/habits.css'],
 
   runtimeConfig: {
+    apiBase: process.env.URL_API || 'http://localhost/',
     public: {
-      apiUrl: 'http://localhost/'
+      apiUrl: process.env.URL_API || 'http://localhost/'
     }
   },
 

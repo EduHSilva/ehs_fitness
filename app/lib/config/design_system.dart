@@ -57,7 +57,8 @@ class AppTheme {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: ButtonStyle(
         shape: WidgetStateProperty.all(_roundedShape),
-        side: WidgetStateProperty.all(const BorderSide(color: AppColors.border)),
+        side:
+            WidgetStateProperty.all(const BorderSide(color: AppColors.border)),
         padding: WidgetStateProperty.all(
             const EdgeInsets.symmetric(vertical: 12, horizontal: 20)),
         foregroundColor: WidgetStateProperty.all(AppColors.primary),

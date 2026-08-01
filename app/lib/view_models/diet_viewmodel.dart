@@ -1,27 +1,26 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
 import '../models/health/diet_model.dart';
 import '../services/diet_service.dart';
+import 'base_view_model.dart';
 
-class DietViewModel {
-  final DietService _dietService = DietService();
-  ValueNotifier<bool> isLoading = ValueNotifier(false);
-  ValueNotifier<String?> errorMessage = ValueNotifier(null);
-  ValueNotifier<List<Food>> foods = ValueNotifier([]);
-  ValueNotifier<List<Meal>> meals = ValueNotifier([]);
+class DietViewModel extends BaseViewModel {
+  DietViewModel({DietService? dietService})
+      : _dietService = dietService ?? DietService();
+
+  final DietService _dietService;
+  final foods = ValueNotifier<List<Food>>([]);
+  final meals = ValueNotifier<List<Meal>>([]);
 
   Future<void> fetchFoods(search) async {
-    try {
-      foods.value = [];
-      isLoading.value = true;
-      List<Food> response = await _dietService.fetchFoods(search);
+    foods.value = [];
+    final response = await execute(
+      () => _dietService.fetchFoods(search),
+      failureMessage: 'Error fetching foods',
+    );
+    if (response != null) {
       foods.value = response;
-    } catch (e) {
-      errorMessage.value = "Error fetching foods";
-      AppConfig.getLogger().e(e);
-    } finally {
-      isLoading.value = false;
     }
   }
 
@@ -45,15 +44,12 @@ class DietViewModel {
 
   Future<void> fetchMeals() async {
     meals.value = [];
-    try {
-      isLoading.value = true;
-      List<Meal> response = await _dietService.fetchMeals();
+    final response = await execute(
+      _dietService.fetchMeals,
+      failureMessage: 'Error fetching meals',
+    );
+    if (response != null) {
       meals.value = response;
-    } catch (e) {
-      errorMessage.value = "Error fetching meals";
-      AppConfig.getLogger().e(e);
-    } finally {
-      isLoading.value = false;
     }
   }
 
@@ -79,8 +75,7 @@ class DietViewModel {
   Future<MealResponse?> addMeal(CreateMealRequest request) async {
     try {
       isLoading.value = true;
-      MealResponse? response =
-      await _dietService.addMeal(request);
+      MealResponse? response = await _dietService.addMeal(request);
       if (response?.meal != null) {
         await fetchMeals();
       } else {
@@ -95,12 +90,10 @@ class DietViewModel {
     return null;
   }
 
-  Future<MealResponse?> editMeal(
-      int id, UpdateMealRequest request) async {
+  Future<MealResponse?> editMeal(int id, UpdateMealRequest request) async {
     try {
       isLoading.value = true;
-      MealResponse? response =
-          await _dietService.editMeal(id, request);
+      MealResponse? response = await _dietService.editMeal(id, request);
       if (response?.meal != null) {
         await fetchMeals();
       } else {
