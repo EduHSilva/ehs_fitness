@@ -18,7 +18,6 @@ Future<void> main() async {
   await EasyLocalization.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
-
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en', ''), Locale('pt', '')],
@@ -106,7 +105,9 @@ class MyAppState extends State<MyApp> {
         '/login': (context) => const LoginView(),
         '/register': (context) => const RegisterView(),
         '/home': (context) => const HealthView(),
-        '/profile': (context) => UserProfileView(id: AppConfig.user!.id,),
+        '/profile': (context) => UserProfileView(
+              id: AppConfig.user!.id,
+            ),
       },
     );
   }

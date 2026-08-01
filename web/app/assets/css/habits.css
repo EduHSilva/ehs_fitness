@@ -1,0 +1,10 @@
+.habits-intro { background:linear-gradient(120deg,#7c3aed,#a855f7 58%,#2563eb); }
+.habit-form { display:grid; grid-template-columns:1.2fr 1fr auto; align-items:end; gap:14px; }
+.habit-form select { width:100%; padding:11px 12px; border:1px solid #d9e2ec; border-radius:8px; color:#172036; background:#fff; font:inherit; outline:0; }
+.habit-form select:focus { border-color:var(--blue); box-shadow:0 0 0 3px #2563eb14; }
+.habit-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:15px; }
+.habit-card { display:grid; grid-template-columns:42px 1fr auto; align-items:center; gap:12px; padding:16px; border:1px solid #e5edf6; border-radius:13px; background:#fff; }
+.habit-icon { display:grid; width:42px; height:42px; place-items:center; border-radius:11px; color:#7c3aed; background:#f3e8ff; }
+.habit-icon svg { width:21px; }.habit-card h2 { margin:0 0 3px; font-size:15px; }.habit-card p { margin:0; color:#7c3aed; font-size:12px; font-weight:700; }
+.habit-card button { display:grid; padding:4px; border:0; color:#94a3b8; background:transparent; cursor:pointer; }.habit-card button:hover { color:#ef4444; }.habit-card button svg { width:17px; }
+@media (max-width:540px) { .habit-form { grid-template-columns:1fr; }.habit-form .primary-button { width:100%; } }

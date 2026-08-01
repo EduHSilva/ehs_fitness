@@ -1,8 +1,4 @@
-enum Priority {
-  essential,
-  normal,
-  low
-}
+enum Priority { essential, normal, low }
 
 extension PriorityExtension on Priority {
   String get label {
@@ -13,17 +9,11 @@ extension PriorityExtension on Priority {
         return 'normal';
       case Priority.low:
         return 'low';
-      }
+    }
   }
 }
 
-enum FrequencyTransaction {
-  weekly,
-  monthly,
-  yearly,
-  unique
-}
-
+enum FrequencyTransaction { weekly, monthly, yearly, unique }
 
 extension FrequencyTransactionExtension on FrequencyTransaction {
   String get label {
@@ -36,19 +26,11 @@ extension FrequencyTransactionExtension on FrequencyTransaction {
         return 'yearly';
       case FrequencyTransaction.unique:
         return 'unique';
-
     }
   }
 }
 
-enum Frequency {
-  daily,
-  mondayToFriday,
-  weekly,
-  monthly,
-  yearly,
-  unique
-}
+enum Frequency { daily, mondayToFriday, weekly, monthly, yearly, unique }
 
 extension FrequencyExtension on Frequency {
   String get label {

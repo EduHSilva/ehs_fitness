@@ -180,10 +180,16 @@ class NewMealViewState extends State<NewMealView> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: () => _openFoodModal(context), icon: const Icon(Icons.add), label: const Text('Adicionar alimentos'))),
+                  SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                          onPressed: () => _openFoodModal(context),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Adicionar alimentos'))),
                   const SizedBox(height: 16),
                   if (_selectedFoods.isNotEmpty)
-                    Text('${_selectedFoods.length} alimento(s) selecionado(s)', style: Theme.of(context).textTheme.titleSmall),
+                    Text('${_selectedFoods.length} alimento(s) selecionado(s)',
+                        style: Theme.of(context).textTheme.titleSmall),
                   if (_selectedFoods.isNotEmpty) const SizedBox(height: 8),
                   if (_selectedFoods.isNotEmpty)
                     ListView.builder(

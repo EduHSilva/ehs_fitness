@@ -10,11 +10,14 @@ class DietService {
   String get _mealsCacheKey => 'cached_meals_${AppConfig.user?.id ?? 'guest'}';
 
   Future<List<Meal>> _cachedMeals() async {
-    final saved = (await SharedPreferences.getInstance()).getString(_mealsCacheKey);
+    final saved =
+        (await SharedPreferences.getInstance()).getString(_mealsCacheKey);
     if (saved == null) return [];
     final data = jsonDecode(saved) as Map<String, dynamic>;
     final meals = data['data'] as List? ?? [];
-    return meals.map((meal) => Meal.fromJson(meal as Map<String, dynamic>)).toList();
+    return meals
+        .map((meal) => Meal.fromJson(meal as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<Food>> fetchFoods(search) async {
@@ -41,13 +44,17 @@ class DietService {
   Future<List<Meal>> fetchMeals() async {
     try {
       final client = await AppConfig.getHttpClient();
-      final response = await client.get(Uri.parse('${AppConfig.apiUrl}/fitness/diet/meals'));
+      final response =
+          await client.get(Uri.parse('${AppConfig.apiUrl}/fitness/diet/meals'));
       if (response.statusCode != 200) throw Exception('Failed to load meals');
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      await (await SharedPreferences.getInstance()).setString(_mealsCacheKey, response.body);
+      await (await SharedPreferences.getInstance())
+          .setString(_mealsCacheKey, response.body);
       AppConfig.isOffline.value = false;
       final meals = data['data'] as List? ?? [];
-      return meals.map((meal) => Meal.fromJson(meal as Map<String, dynamic>)).toList();
+      return meals
+          .map((meal) => Meal.fromJson(meal as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       final cached = await _cachedMeals();
       if (cached.isNotEmpty) {

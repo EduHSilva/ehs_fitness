@@ -46,4 +46,3 @@ class HtmlText extends StatelessWidget {
     return spans;
   }
 }
-

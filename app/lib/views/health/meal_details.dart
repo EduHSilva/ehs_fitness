@@ -41,67 +41,67 @@ class MealDetailViewState extends State<MealDetailView> {
       body: _mealResponse == null
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${_mealResponse!.meal!.name} - ${_mealResponse!.meal!.hour}',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: _mealResponse!.meal!.foods == null ||
-                  _mealResponse!.meal!.foods!.isEmpty
-                  ? Center(child: Text('noData'.tr()))
-                  : ListView.builder(
-                itemCount: _mealResponse!.meal!.foods!.length,
-                itemBuilder: (context, index) {
-                  var food = _mealResponse!.meal!.foods![index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            toBeginningOfSentenceCase(food.foodName!),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${_mealResponse!.meal!.name} - ${_mealResponse!.meal!.hour}',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                  ),
+                  const SizedBox(height: 24),
+                  Expanded(
+                    child: _mealResponse!.meal!.foods == null ||
+                            _mealResponse!.meal!.foods!.isEmpty
+                        ? Center(child: Text('noData'.tr()))
+                        : ListView.builder(
+                            itemCount: _mealResponse!.meal!.foods!.length,
+                            itemBuilder: (context, index) {
+                              var food = _mealResponse!.meal!.foods![index];
+                              return Card(
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        toBeginningOfSentenceCase(
+                                            food.foodName!),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        '${'quantity'.tr()}: ${food.quantity}',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      if (food.observation != null &&
+                                          food.observation!.isNotEmpty)
+                                        Text(
+                                          '${'notes'.tr()}: ${food.observation}',
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          const SizedBox(height: 8),
-                          if (food.quantity != null)
-                            Text(
-                              '${'quantity'.tr()}: ${food.quantity}',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          const SizedBox(height: 8),
-                          if (food.observation != null &&
-                              food.observation!.isNotEmpty)
-                            Text(
-                              '${'notes'.tr()}: ${food.observation}',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }

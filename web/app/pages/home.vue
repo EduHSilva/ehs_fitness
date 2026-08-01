@@ -5,6 +5,14 @@ const router = useRouter()
 const user = ref<StoredUser | null>(null)
 const activeTab = ref('Início')
 
+watch(activeTab, (tab) => {
+  if (tab === 'Treinos') {
+    router.push('/workouts')
+  } else if (tab !== 'InÃ­cio') {
+    router.push('/diet')
+  }
+})
+
 onMounted(() => {
   const token = localStorage.getItem('user_token')
   const storedUser = localStorage.getItem('user')
@@ -35,6 +43,7 @@ useSeoMeta({ title: 'Início — EHS Fitness' })
       <NuxtLink to="/home" class="brand app-brand"><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span>EHS <b>Fitness</b></span></NuxtLink>
       <nav class="app-nav" aria-label="Navegação do aplicativo">
         <button v-for="item in [{ label: 'Início', icon: 'i-lucide-house' }, { label: 'Alimentação', icon: 'i-lucide-utensils' }, { label: 'Treinos', icon: 'i-lucide-dumbbell' }]" :key="item.label" :class="{ active: activeTab === item.label }" @click="activeTab = item.label"><UIcon :name="item.icon" /> {{ item.label }}</button>
+        <NuxtLink to="/habits"><UIcon name="i-lucide-list-checks" /> Habitos</NuxtLink>
       </nav>
       <div class="sidebar-bottom"><button><UIcon name="i-lucide-settings-2" /> Configurações</button><button @click="logout"><UIcon name="i-lucide-log-out" /> Sair</button></div>
     </aside>
