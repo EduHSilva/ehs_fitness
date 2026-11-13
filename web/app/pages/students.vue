@@ -22,7 +22,7 @@ async function add() {
     errorMessage.value = integrationError.value || 'Nao foi possivel cadastrar o aluno.'
   }
 }
-useSeoMeta({ title: 'Alunos — EHS Fitness' })
+useSeoMeta({ title: 'Alunos' })
 </script>
 
 <template>

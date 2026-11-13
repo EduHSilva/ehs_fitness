@@ -6,7 +6,7 @@ const { studentId, studentName } = useStudentContext()
 const { habits, name, category, error: errorMessage, categories, load, add: addHabit, remove: removeHabit } = useHabits(studentId)
 
 onMounted(load)
-useSeoMeta({ title: 'Habitos — EHS Fitness' })
+useSeoMeta({ title: 'Hábitos' })
 </script>
 
 <template>

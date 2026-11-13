@@ -1,0 +1,35 @@
+# Sobe o Fitness web conectado à rede do nginx dos microservices.
+#
+# Acesso: http://localhost/app/fitness/
+#
+# O container repassa /app/fitness/api/* para o gateway dos microservices.
+#
+# Uso:
+#   docker compose up -d --build
+#   docker compose logs -f fitness-ui
+
+services:
+  fitness-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NUXT_APP_BASE_URL: /app/fitness/
+        URL_API: ${FITNESS_API_URL:-/}
+        # Mesmo client ID OAuth usado pelo backend (GOOGLE_CLIENT_ID).
+        NUXT_PUBLIC_GOOGLE_CLIENT_ID: ${FITNESS_GOOGLE_CLIENT_ID:-}
+    image: ${FITNESS_UI_IMAGE:-ehs_fitness-ui:local}
+    container_name: fitness-ui
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      default: {}
+      ehs_microservices:
+        aliases:
+          - fitness-ui
+
+networks:
+  ehs_microservices:
+    external: true
+    name: ${EHS_MICROSERVICES_NETWORK:-ehs_microservices_default}

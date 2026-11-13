@@ -1,6 +1,5 @@
 <script setup lang="ts">
 useSeoMeta({
-  title: 'EHS Fitness — Sua rotina em movimento',
   description: 'Planeje treinos, organize sua alimentação e acompanhe sua evolução em um só lugar.'
 })
 
@@ -125,5 +124,10 @@ const benefits = [
         </div>
       </section>
     </main>
+
+    <footer class="legal-footer">
+      <span>EHS Fitness © {{ new Date().getFullYear() }}</span>
+      <a href="/app/privacidade/">Política de Privacidade</a>
+    </footer>
   </div>
 </template>

@@ -7,7 +7,7 @@ const workoutManager = useWorkouts(studentId)
 const { workouts, catalog, loading, saving, error: errorMessage, formError, showForm, expandedWorkoutId, workoutName, selectedExercises, exerciseSearch, selectedBodyPart, bodyParts, filteredCatalog, load: loadWorkouts, openForm, addExercise, removeExercise, cancelForm, save: saveWorkout, exerciseDetail } = workoutManager
 
 onMounted(loadWorkouts)
-useSeoMeta({ title: 'Treinos — EHS Fitness' })
+useSeoMeta({ title: 'Treinos' })
 </script>
 
 <template>
