@@ -1,36 +1,37 @@
-*.class
-*.log
-*.pyc
-*.swp
+# Sistema / editores
 .DS_Store
-.atom/
-.buildlog/
-.history
-.svn/
-migrate_working_dir/
-
+*.swp
 *.iml
 *.ipr
 *.iws
-*.idea/
+.idea/
+.history
+.svn/
 
+# Dart / Flutter (legacy/flutter — base para a futura migração Kotlin)
 **/doc/api/
-app/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-app/build/
+legacy/flutter/build/
+legacy/flutter/.env
 
-app.*.symbols
+# Node / Nuxt (web)
+node_modules/
+.nuxt/
+.output/
+.data/
+.nitro/
+.cache/
+dist/
+*.log
 
-app.*.map.json
+# Variáveis locais
+**/.env
+**/.env.*
+!web/.env.example
 
-/app/android/app/debug
-/app/android/app/profile
-/app/android/app/release
-
-**.env
-/backend/db/
+# TODO local
 **TODO.md

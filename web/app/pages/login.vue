@@ -7,6 +7,109 @@ const loading = ref(false)
 const errorMessage = ref('')
 const config = useRuntimeConfig()
 
+type GoogleTokenResponse = { credential?: string }
+type GoogleWindow = Window & {
+  google?: {
+    accounts?: {
+      id?: {
+        initialize: (options: {
+          client_id: string
+          callback: (response: GoogleTokenResponse) => void
+        }) => void
+        renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void
+      }
+    }
+  }
+}
+
+const googleSlot = ref<HTMLElement | null>(null)
+const googleEnabled = computed(() => Boolean(config.public.googleClientId))
+const googleFailed = ref(false)
+
+let googleRenderId: { renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void } | null = null
+let googleRenderedWidth = 0
+let googleResizeObserver: ResizeObserver | null = null
+
+function renderGoogleButton() {
+  const el = googleSlot.value
+  if (!el || !googleRenderId) return
+
+  // O GSI não aceita largura percentual: usa a largura real do slot para o
+  // botão acompanhar os campos e não estourar o card em telas estreitas.
+  const width = Math.max(200, Math.min(400, Math.floor(el.getBoundingClientRect().width) || 320))
+  if (width === googleRenderedWidth) return
+  googleRenderedWidth = width
+  el.replaceChildren()
+
+  googleRenderId.renderButton(el, {
+    type: 'standard',
+    theme: 'outline',
+    size: 'large',
+    text: 'continue_with',
+    shape: 'rectangular',
+    logo_alignment: 'left',
+    width
+  })
+}
+
+async function loadGoogleIdentity() {
+  const w = window as GoogleWindow
+  if (w.google?.accounts?.id) return w.google
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Falha ao carregar o Google'))
+    document.head.appendChild(script)
+  })
+  if (!w.google?.accounts?.id) throw new Error('Google indisponível')
+  return w.google
+}
+
+type SessionPayload = {
+  token?: string
+  id?: string
+  username?: string
+  email?: string
+  roles?: string[]
+  apps?: string[]
+  user?: Record<string, unknown>
+}
+
+function professionalRole(roles: string[]) {
+  if (roles.includes('HEALTH_NUTRITIONIST')) return 'nutritionist'
+  if (roles.includes('HEALTH_PERSONAL')) return 'personal_trainer'
+  return ''
+}
+
+function applySession(data?: SessionPayload) {
+  if (!data?.token) throw new Error('Não foi possível entrar com estas credenciais.')
+  // O login devolve o usuário "achatado" (id/username/email/roles); guardamos nesse
+  // formato para o restante do app ler `user.id` e `user.roles`.
+  const loggedUser = data.user ?? {
+    id: data.id,
+    username: data.username,
+    email: data.email,
+    roles: data.roles ?? [],
+    apps: data.apps ?? []
+  }
+  localStorage.setItem('user_token', data.token)
+  localStorage.setItem('user', JSON.stringify(loggedUser))
+  const roles = Array.isArray(loggedUser.roles) ? loggedUser.roles.map(String) : []
+  const role = professionalRole(roles)
+  if (role) localStorage.setItem('fitness_account_role', role)
+  else localStorage.removeItem('fitness_account_role')
+  if (!keepConnected.value) sessionStorage.setItem('session_only', 'true')
+  else sessionStorage.removeItem('session_only')
+}
+
+function reportError(error: unknown) {
+  const fetchError = error as { data?: { message?: string }, message?: string }
+  errorMessage.value = fetchError.data?.message || fetchError.message || 'Não foi possível entrar. Tente novamente.'
+}
+
 async function submit() {
   errorMessage.value = ''
   if (!email.value.trim() || !password.value) {
@@ -20,30 +123,65 @@ async function submit() {
 
   loading.value = true
   try {
-    const response = await $fetch<{ data?: { token?: string, user?: Record<string, unknown> }, message?: string }>('/api/users/auth/login', {
+    const response = await $fetch<{ data?: SessionPayload, message?: string }>('/api/users/auth/login', {
       method: 'POST',
-      body: { email: email.value.trim(), password: password.value }
+      body: { email: email.value.trim(), password: password.value, app: 'FITNESS' }
     })
     if (!response.data?.token) throw new Error(response.message || 'Não foi possível entrar com estas credenciais.')
-    localStorage.setItem('user_token', response.data.token)
-    localStorage.setItem('user', JSON.stringify(response.data?.user || {}))
-    const loggedUser = response.data?.user || {}
-    const role = String(loggedUser.role || loggedUser.account_type || loggedUser.type || '').toLowerCase()
-    if (loggedUser.is_pj === true || loggedUser.person_type === 'pj' || ['pj', 'personal_trainer', 'nutritionist', 'professional'].includes(role)) {
-      localStorage.setItem('fitness_account_role', role === 'nutritionist' ? 'nutritionist' : 'personal_trainer')
-    }
-    if (!keepConnected.value) sessionStorage.setItem('session_only', 'true')
-    else sessionStorage.removeItem('session_only')
+    applySession(response.data)
     await navigateTo('/home')
   } catch (error: unknown) {
-    const fetchError = error as { data?: { message?: string }, message?: string }
-    errorMessage.value = fetchError.data?.message || fetchError.message || 'Não foi possível entrar. Tente novamente.'
+    reportError(error)
   } finally {
     loading.value = false
   }
 }
 
-useSeoMeta({ title: 'Entrar — EHS Fitness' })
+async function submitGoogle(idToken: string) {
+  errorMessage.value = ''
+  loading.value = true
+  try {
+    const response = await $fetch<{ data?: SessionPayload, message?: string }>('/api/users/auth/login', {
+      method: 'POST',
+      body: { tokenGmail: idToken, app: 'FITNESS' }
+    })
+    if (!response.data?.token) throw new Error(response.message || 'Não foi possível entrar com estas credenciais.')
+    applySession(response.data)
+    await navigateTo('/home')
+  } catch (error: unknown) {
+    reportError(error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  const el = googleSlot.value
+  if (!googleEnabled.value || !el) return
+  try {
+    const google = await loadGoogleIdentity()
+    const id = google.accounts?.id
+    if (!id) throw new Error('Google indisponível')
+    id.initialize({
+      client_id: config.public.googleClientId as string,
+      callback: (response) => {
+        if (response.credential) void submitGoogle(response.credential)
+      }
+    })
+    googleRenderId = id
+    renderGoogleButton()
+    googleResizeObserver = new ResizeObserver(renderGoogleButton)
+    googleResizeObserver.observe(el)
+  } catch {
+    googleFailed.value = true
+  }
+})
+
+onBeforeUnmount(() => {
+  googleResizeObserver?.disconnect()
+})
+
+useSeoMeta({ title: 'Entrar' })
 </script>
 
 <template>
@@ -94,7 +232,7 @@ useSeoMeta({ title: 'Entrar — EHS Fitness' })
             >
           </div>
           <div class="password-label">
-            <label for="password">Senha</label><a href="#">Esqueci minha senha</a>
+            <label for="password">Senha</label><a href="/user/reset-password">Esqueci minha senha</a>
           </div>
           <div class="input-wrap">
             <UIcon name="i-lucide-lock-keyhole" /><input
@@ -123,6 +261,17 @@ useSeoMeta({ title: 'Entrar — EHS Fitness' })
           >
             {{ loading ? 'Entrando...' : 'Entrar na minha conta' }} <UIcon name="i-lucide-arrow-right" />
           </button>
+          <template v-if="googleEnabled">
+            <div v-if="!googleFailed" class="google-divider"><span>ou</span></div>
+            <div v-if="!googleFailed" ref="googleSlot" class="google-slot" />
+          </template>
+          <p
+            v-if="googleFailed"
+            class="form-error"
+            role="alert"
+          >
+            Não foi possível carregar o login com Google.
+          </p>
           <p
             v-if="errorMessage"
             class="form-error"

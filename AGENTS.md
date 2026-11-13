@@ -4,19 +4,19 @@
 
 O repositório contém dois clientes para o EHS Fitness:
 
-- `app/`: aplicativo Flutter.
-- `web/`: aplicação web Nuxt 4 / Vue 3.
+- `web/`: aplicação web Nuxt 4 / Vue 3 (publicada em `/app/fitness/`).
+- `legacy/flutter/`: aplicativo Flutter legado, mantido como base para a futura migração para Kotlin em `app/`.
 
 Não há código de backend neste repositório. Os dois clientes usam a URL configurada por ambiente para consumir a API externa.
 
-## Flutter (`app/`)
+## Flutter legado (`legacy/flutter/`)
 
-- Código-fonte: `app/lib/`.
+- Código-fonte: `legacy/flutter/lib/`.
 - Organização: `config/`, `models/`, `services/`, `view_models/`, `views/` e `widgets/`.
-- Recursos: `app/assets/i18n/` e `app/assets/images/`.
-- Configuração local: `app/.env`, com `URL_API`.
+- Recursos: `legacy/flutter/assets/i18n/` e `legacy/flutter/assets/images/`.
+- Configuração local: `legacy/flutter/.env`, com `URL_API`.
 
-Comandos, executados em `app/`:
+Comandos, executados em `legacy/flutter/`:
 
 ```bash
 flutter pub get

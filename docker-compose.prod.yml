@@ -1,0 +1,19 @@
+# Produção: usa a imagem publicada no GitHub Container Registry.
+# A stack dos microservices deve estar ativa e sua rede externa deve existir.
+services:
+  fitness-ui:
+    image: ${FITNESS_UI_IMAGE:-ghcr.io/eduhsilva/fitness-ui:${IMAGE_TAG:-latest}}
+    container_name: fitness-ui
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      default: {}
+      ehs_microservices:
+        aliases:
+          - fitness-ui
+
+networks:
+  ehs_microservices:
+    external: true
+    name: ${EHS_MICROSERVICES_NETWORK:-microservices_backend}

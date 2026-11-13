@@ -1,36 +1,37 @@
 <script setup lang="ts">
-import { registerAccount, type AccountRole } from '~/features/auth/auth.api'
+import { useRegistration } from '~/features/auth/useRegistration'
 
-const name = ref('')
-const email = ref('')
-const role = ref<AccountRole>('student')
-const errorMessage = ref('')
-const loading = ref(false)
+const {
+  name,
+  email,
+  password,
+  role,
+  errorMessage,
+  loading,
+  confirmationOpen,
+  register,
+  goToLogin
+} = useRegistration()
 
-async function register() {
-  errorMessage.value = ''
-  if (!name.value.trim() || !email.value.trim()) {
-    errorMessage.value = 'Informe seu nome e e-mail para continuar.'
-    return
-  }
-  loading.value = true
-  try {
-    const session = (await registerAccount({ name: name.value.trim(), email: email.value.trim(), role: role.value })).data
-    if (!session?.token) throw new Error('Cadastro concluido sem uma sessao valida.')
-    localStorage.setItem('user_token', session.token)
-    localStorage.setItem('user', JSON.stringify(session.user))
-    await navigateTo('/home')
-  } catch (cause) {
-    errorMessage.value = (cause as { data?: { message?: string }, message?: string }).data?.message ?? (cause as Error).message ?? 'Nao foi possivel criar sua conta.'
-  } finally {
-    loading.value = false
-  }
-}
-useSeoMeta({ title: 'Criar conta — EHS Fitness' })
+useSeoMeta({ title: 'Criar conta' })
 </script>
 
 <template>
   <main class="register-page">
+    <UModal
+      v-model:open="confirmationOpen"
+      title="Confirme seu e-mail"
+      description="Enviamos uma mensagem de confirmação para o e-mail informado. Confirme sua conta antes de entrar."
+      :dismissible="false"
+    >
+      <template #footer>
+        <UButton
+          label="Ir para o login"
+          trailing-icon="i-lucide-arrow-right"
+          @click="goToLogin"
+        />
+      </template>
+    </UModal>
     <section class="register-aside">
       <NuxtLink
         to="/"
@@ -45,11 +46,21 @@ useSeoMeta({ title: 'Criar conta — EHS Fitness' })
         <p>Treinos, alimentação e acompanhamento em uma rotina que funciona para você.</p>
       </div>
       <ol class="register-benefits">
-        <li><UIcon name="i-lucide-check" /> Cadastro gratuito e rápido</li>
-        <li><UIcon name="i-lucide-check" /> Personalize sua experiência</li>
-        <li><UIcon name="i-lucide-check" /> Acesse de onde estiver</li>
+        <li>
+          <UIcon name="i-lucide-check" />
+          Cadastro gratuito e rápido
+        </li>
+        <li>
+          <UIcon name="i-lucide-check" />
+          Personalize sua experiência
+        </li>
+        <li>
+          <UIcon name="i-lucide-check" />
+          Acesse de onde estiver
+        </li>
       </ol>
-      <div class="register-orb register-orb-one" /><div class="register-orb register-orb-two" />
+      <div class="register-orb register-orb-one" />
+      <div class="register-orb register-orb-two" />
     </section>
     <section class="register-panel">
       <div class="register-mobile-brand">
@@ -62,18 +73,24 @@ useSeoMeta({ title: 'Criar conta — EHS Fitness' })
         <NuxtLink
           to="/"
           class="back-link"
-        ><UIcon name="i-lucide-arrow-left" /> Voltar para o início</NuxtLink>
+        >
+          <UIcon name="i-lucide-arrow-left" />
+          Voltar para o início
+        </NuxtLink>
         <div class="register-heading">
           <span class="register-step">Passo 1 de 1</span>
-          <h2>Crie sua conta</h2><p>Leva menos de um minuto para começar.</p>
+          <h2>Crie sua conta</h2>
+          <p>Leva menos de um minuto para começar.</p>
         </div>
         <form
           class="register-form"
           @submit.prevent="register"
         >
           <div class="register-field">
-            <label for="name">Como podemos chamar você?</label><div class="register-input">
-              <UIcon name="i-lucide-user-round" /><input
+            <label for="name">Como podemos chamar você?</label>
+            <div class="register-input">
+              <UIcon name="i-lucide-user-round" />
+              <input
                 id="name"
                 v-model="name"
                 placeholder="Seu nome"
@@ -83,8 +100,10 @@ useSeoMeta({ title: 'Criar conta — EHS Fitness' })
             </div>
           </div>
           <div class="register-field">
-            <label for="email">E-mail</label><div class="register-input">
-              <UIcon name="i-lucide-mail" /><input
+            <label for="email">E-mail</label>
+            <div class="register-input">
+              <UIcon name="i-lucide-mail" />
+              <input
                 id="email"
                 v-model="email"
                 type="email"
@@ -94,42 +113,63 @@ useSeoMeta({ title: 'Criar conta — EHS Fitness' })
               >
             </div>
           </div>
+          <div class="register-field">
+            <label for="password">Senha</label>
+            <div class="register-input">
+              <UIcon name="i-lucide-user-round-key" />
+              <input
+                id="password"
+                v-model="password"
+                type="password"
+                placeholder="***"
+                required
+              >
+            </div>
+          </div>
           <fieldset class="role-selector">
             <legend>Qual é o seu objetivo na plataforma?</legend>
             <label><input
-              v-model="role"
-              value="student"
-              type="radio"
-            ><span class="role-icon"><UIcon name="i-lucide-dumbbell" /></span><span><b>Aluno / praticante</b><small>Organize seu próprio bem-estar.</small></span><UIcon
-              class="role-check"
-              name="i-lucide-check-circle-2"
-            /></label>
+                     v-model="role"
+                     value="HEALTH_USER"
+                     type="radio"
+                   ><span class="role-icon"><UIcon name="i-lucide-dumbbell" /></span><span><b>Aluno / praticante</b><small>Organize seu próprio bem-estar.</small></span>
+              <UIcon
+                class="role-check"
+                name="i-lucide-check-circle-2"
+              />
+            </label>
             <label><input
-              v-model="role"
-              value="personal_trainer"
-              type="radio"
-            ><span class="role-icon"><UIcon name="i-lucide-users-round" /></span><span><b>Personal trainer</b><small>Gerencie seus alunos e sua rotina.</small></span><UIcon
-              class="role-check"
-              name="i-lucide-check-circle-2"
-            /></label>
+                     v-model="role"
+                     value="HEALTH_PERSONAL"
+                     type="radio"
+                   ><span class="role-icon"><UIcon name="i-lucide-users-round" /></span><span><b>Personal trainer</b><small>Gerencie seus alunos e sua rotina.</small></span>
+              <UIcon
+                class="role-check"
+                name="i-lucide-check-circle-2"
+              />
+            </label>
             <label><input
-              v-model="role"
-              value="nutritionist"
-              type="radio"
-            ><span class="role-icon"><UIcon name="i-lucide-apple" /></span><span><b>Professor / nutricionista</b><small>Crie planos para alunos e para você.</small></span><UIcon
-              class="role-check"
-              name="i-lucide-check-circle-2"
-            /></label>
+                     v-model="role"
+                     value="HEALTH_NUTRITIONIST"
+                     type="radio"
+                   ><span class="role-icon"><UIcon name="i-lucide-apple" /></span><span><b>Nutricionista</b><small>Crie planos para alunos e para você.</small></span>
+              <UIcon
+                class="role-check"
+                name="i-lucide-check-circle-2"
+              />
+            </label>
           </fieldset>
           <button
             class="primary-button submit-button"
             type="submit"
             :disabled="loading"
           >
-            {{ loading ? 'Criando conta...' : 'Continuar' }} <UIcon name="i-lucide-arrow-right" />
+            {{ loading ? 'Criando conta...' : 'Continuar' }}
+            <UIcon name="i-lucide-arrow-right" />
           </button>
           <p class="register-privacy">
-            <UIcon name="i-lucide-shield-check" /> Seus dados são protegidos e usados apenas para personalizar sua experiência.
+            <UIcon name="i-lucide-shield-check" />
+            Seus dados são protegidos e usados apenas para personalizar sua experiência.
           </p>
           <p
             v-if="errorMessage"
@@ -140,7 +180,8 @@ useSeoMeta({ title: 'Criar conta — EHS Fitness' })
           </p>
         </form>
         <p class="signup-text">
-          Já tem uma conta? <NuxtLink to="/login">Entrar</NuxtLink>
+          Já tem uma conta?
+          <NuxtLink to="/login">Entrar</NuxtLink>
         </p>
       </div>
     </section>

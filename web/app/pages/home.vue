@@ -34,7 +34,7 @@ function logout() {
   router.push('/login')
 }
 
-useSeoMeta({ title: 'Início — EHS Fitness' })
+useSeoMeta({ title: 'Início' })
 </script>
 
 <template>

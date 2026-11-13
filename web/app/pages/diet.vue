@@ -7,7 +7,7 @@ const diet = useDiet(studentId)
 const { meals, foods, loading, saving, searching, error: errorMessage, formError, showForm, mealName, mealHour, foodQuery, selectedFoods, load: loadMeals, addFood, removeFood, cancelForm, save: saveMeal } = diet
 
 onMounted(loadMeals)
-useSeoMeta({ title: 'Alimentacao — EHS Fitness' })
+useSeoMeta({ title: 'Alimentação' })
 </script>
 
 <template>

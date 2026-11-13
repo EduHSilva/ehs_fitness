@@ -6,8 +6,8 @@ const isProfessional = computed(() => {
   if (!import.meta.client) return false
   try {
     const user = JSON.parse(localStorage.getItem('user') || '{}')
-    const role = String(user.role || user.account_type || user.type || '').toLowerCase()
-    return ['personal_trainer', 'nutritionist', 'professional', 'pj'].includes(role) || user.is_pj === true
+    const roles = Array.isArray(user.roles) ? user.roles.map(String) : []
+    return roles.includes('HEALTH_PERSONAL') || roles.includes('HEALTH_NUTRITIONIST')
   } catch {
     return false
   }

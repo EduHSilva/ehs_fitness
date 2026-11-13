@@ -14,8 +14,8 @@ export function useStudents() {
     }
   })
   const isProfessional = computed(() => {
-    const role = String(account.value.role || account.value.account_type || account.value.type || '').toLowerCase()
-    return ['personal_trainer', 'nutritionist', 'professional', 'pj'].includes(role) || account.value.is_pj === true
+    const roles = Array.isArray(account.value.roles) ? (account.value.roles as unknown[]).map(String) : []
+    return roles.includes('HEALTH_PERSONAL') || roles.includes('HEALTH_NUTRITIONIST')
   })
   const error = ref('')
 
