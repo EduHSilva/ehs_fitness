@@ -1,61 +1,273 @@
 <script setup lang="ts">
-type StoredUser = { name?: string, username?: string, email?: string, photo?: string }
+import { useHome } from '~/features/home/useHome'
+import { useIncomingInvites } from '~/features/students/useIncomingInvites'
+import { readStoredInviteToken, storeInviteToken } from '~/features/students/invite'
 
 const router = useRouter()
-const user = ref<StoredUser | null>(null)
-const activeTab = ref('Início')
+const route = useRoute()
+const { user } = useSession()
+const invites = useIncomingInvites()
+const inviteToken = ref('')
 
-watch(activeTab, (tab) => {
-  if (tab === 'Treinos') {
-    router.push('/workouts')
-  } else if (tab !== 'InÃ­cio') {
-    router.push('/diet')
-  }
-})
-
-onMounted(() => {
-  const token = localStorage.getItem('user_token')
-  const storedUser = localStorage.getItem('user')
-  if (!token || !storedUser) return router.replace('/login')
-  try {
-    user.value = JSON.parse(storedUser)
-  } catch {
-    router.replace('/login')
-  }
-})
+const {
+  loading,
+  error,
+  today,
+  totalWorkouts,
+  totalMeals,
+  activeDays,
+  todayWorkout,
+  nextWorkout,
+  weekDays,
+  consistencyMessage,
+  exerciseLabel,
+  load
+} = useHome()
 
 const firstName = computed<string>(() => (user.value?.name || user.value?.username || 'atleta').split(' ')[0] || 'atleta')
 const initials = computed(() => firstName.value.slice(0, 1).toUpperCase())
+const activeDaysTrack = computed(() => `${Math.round((activeDays.value / 7) * 100)}%`)
 
-function logout() {
-  localStorage.removeItem('user_token')
-  localStorage.removeItem('user')
-  sessionStorage.removeItem('session_only')
-  router.push('/login')
+function goTo(path: string) {
+  router.push(path)
 }
+
+async function acceptInvite() {
+  const card = await invites.accept(inviteToken.value)
+  if (card) inviteToken.value = ''
+}
+
+async function declineInvite() {
+  const card = await invites.decline(inviteToken.value)
+  if (card) inviteToken.value = ''
+}
+
+onMounted(async () => {
+  if (!user.value) return router.replace('/login')
+  const queryInvite = typeof route.query.invite === 'string' ? route.query.invite : ''
+  storeInviteToken(queryInvite)
+  inviteToken.value = queryInvite || readStoredInviteToken()
+  await load()
+})
 
 useSeoMeta({ title: 'Início' })
 </script>
 
 <template>
   <div class="app-shell">
-    <aside class="app-sidebar">
-      <NuxtLink to="/home" class="brand app-brand"><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span>EHS <b>Fitness</b></span></NuxtLink>
-      <nav class="app-nav" aria-label="Navegação do aplicativo">
-        <button v-for="item in [{ label: 'Início', icon: 'i-lucide-house' }, { label: 'Alimentação', icon: 'i-lucide-utensils' }, { label: 'Treinos', icon: 'i-lucide-dumbbell' }]" :key="item.label" :class="{ active: activeTab === item.label }" @click="activeTab = item.label"><UIcon :name="item.icon" /> {{ item.label }}</button>
-        <NuxtLink to="/habits"><UIcon name="i-lucide-list-checks" /> Habitos</NuxtLink>
-      </nav>
-      <div class="sidebar-bottom"><button><UIcon name="i-lucide-settings-2" /> Configurações</button><button @click="logout"><UIcon name="i-lucide-log-out" /> Sair</button></div>
-    </aside>
-
+    <AppSidebar active="home" />
     <main class="app-main">
-      <header class="app-topbar"><div><p>SEU PAINEL DE BEM-ESTAR</p><h1>Olá, {{ firstName }} <span>👋</span></h1></div><div class="topbar-actions"><button class="round-button" aria-label="Notificações"><UIcon name="i-lucide-bell" /></button><button class="profile-button" aria-label="Perfil"><img v-if="user?.photo" :src="user.photo" alt=""><span v-else>{{ initials }}</span></button></div></header>
+      <header class="app-topbar">
+        <div>
+          <p>SEU PAINEL DE BEM-ESTAR</p>
+          <h1>Olá, {{ firstName }} <span>👋</span></h1>
+        </div>
+        <div class="topbar-actions">
+          <button
+            class="round-button"
+            aria-label="Atualizar painel"
+            :disabled="loading"
+            @click="load"
+          >
+            <UIcon
+              name="i-lucide-refresh-cw"
+              :class="{ spin: loading }"
+            />
+          </button>
+          <button
+            class="profile-button"
+            aria-label="Perfil"
+            @click="goTo('/home')"
+          >
+            <img
+              v-if="user?.photo"
+              :src="user.photo"
+              alt=""
+            ><span v-else>{{ initials }}</span>
+          </button>
+        </div>
+      </header>
 
-      <section class="welcome-card"><div><p>SEU FOCO DE HOJE</p><h2>Pequenos passos<br>também levam longe.</h2><button class="light-button" @click="activeTab = 'Treinos'">Ver treino de hoje <UIcon name="i-lucide-arrow-right" /></button></div><UIcon name="i-lucide-sparkles" class="welcome-icon" /></section>
+      <section
+        v-if="inviteToken"
+        class="invite-section invite-banner"
+      >
+        <div>
+          <p class="eyebrow">
+            <span /> convite recebido
+          </p>
+          <h2>Um profissional quer acompanhar seu plano</h2>
+          <p v-if="invites.feedback.value">
+            {{ invites.feedback.value }}
+          </p>
+          <p v-else-if="invites.error.value">
+            {{ invites.error.value }}
+          </p>
+          <p v-else>
+            Aceite para permitir que ele gerencie seu plano. Você pode recusar sem perder seus dados.
+          </p>
+        </div>
+        <div class="form-actions">
+          <button
+            class="secondary-button"
+            :disabled="invites.pending.value"
+            @click="declineInvite"
+          >
+            Recusar
+          </button>
+          <button
+            class="primary-button"
+            :disabled="invites.pending.value"
+            @click="acceptInvite"
+          >
+            {{ invites.pending.value ? 'Aguarde...' : 'Aceitar convite' }}
+          </button>
+        </div>
+      </section>
 
-      <section class="overview-grid" aria-label="Resumo diário"><article><span class="metric-icon blue"><UIcon name="i-lucide-flame" /></span><p>CALORIAS</p><strong>1.240 <small>/ 2.100 kcal</small></strong><div class="metric-track"><span style="width: 59%" /></div></article><article><span class="metric-icon teal"><UIcon name="i-lucide-droplets" /></span><p>ÁGUA</p><strong>1,5 <small>/ 2,5 L</small></strong><div class="metric-track teal-track"><span style="width: 60%" /></div></article><article><span class="metric-icon orange"><UIcon name="i-lucide-dumbbell" /></span><p>MOVIMENTO</p><strong>32 <small>/ 45 min</small></strong><div class="metric-track orange-track"><span style="width: 71%" /></div></article></section>
+      <div
+        v-if="loading"
+        class="page-state"
+      >
+        <UIcon
+          name="i-lucide-loader-circle"
+          class="spin"
+        />
+        <p>Carregando seu painel...</p>
+      </div>
+      <div
+        v-else-if="error"
+        class="page-state error-state"
+      >
+        <UIcon name="i-lucide-circle-alert" />
+        <p>{{ error }}</p>
+        <button
+          class="primary-button"
+          @click="load"
+        >
+          Tentar novamente
+        </button>
+      </div>
+      <template v-else>
+        <section class="welcome-card">
+          <div>
+            <p>SEU FOCO DE HOJE</p>
+            <h2 v-if="todayWorkout">
+              Hoje é dia de<br>{{ todayWorkout.name }}
+            </h2>
+            <h2 v-else-if="nextWorkout">
+              {{ nextWorkout.label }} ·<br>{{ nextWorkout.workout.name }}
+            </h2>
+            <h2 v-else>
+              Sua evolução<br>começa agora.
+            </h2>
+            <button
+              class="light-button"
+              @click="goTo('/workouts')"
+            >
+              {{ todayWorkout ? 'Ver treino de hoje' : 'Abrir treinos' }} <UIcon name="i-lucide-arrow-right" />
+            </button>
+          </div>
+          <UIcon
+            name="i-lucide-sparkles"
+            class="welcome-icon"
+          />
+        </section>
 
-      <section class="content-grid"><div><div class="section-heading"><div><p>SEU PLANO</p><h2>Próximo treino</h2></div><button class="link-button" @click="activeTab = 'Treinos'">Ver todos <UIcon name="i-lucide-arrow-right" /></button></div><article class="workout-card"><div class="workout-image"><UIcon name="i-lucide-dumbbell" /></div><div class="workout-info"><span>HOJE · 18:00</span><h3>Superior · Peito e braços</h3><p><UIcon name="i-lucide-clock-3" /> 45 min <i /> <UIcon name="i-lucide-list-checks" /> 6 exercícios</p></div><button class="start-button" aria-label="Iniciar treino"><UIcon name="i-lucide-play" /></button></article></div><div class="weekly-card"><div class="section-heading"><div><p>CONSISTÊNCIA</p><h2>Meta semanal</h2></div><strong>3 <small>/ 5</small></strong></div><div class="week-days"><span class="done">S</span><span class="done">T</span><span class="done">Q</span><span class="today">Q</span><span>S</span><span>S</span><span>D</span></div><p>Você está indo muito bem. Continue assim!</p></div></section>
+        <section
+          class="overview-grid"
+          aria-label="Resumo da conta"
+        >
+          <article>
+            <span class="metric-icon blue"><UIcon name="i-lucide-dumbbell" /></span>
+            <p>TREINOS</p>
+            <strong>{{ totalWorkouts }} <small>na biblioteca</small></strong>
+          </article>
+          <article>
+            <span class="metric-icon teal"><UIcon name="i-lucide-utensils" /></span>
+            <p>REFEIÇÕES</p>
+            <strong>{{ totalMeals }} <small>no plano</small></strong>
+          </article>
+          <article>
+            <span class="metric-icon orange"><UIcon name="i-lucide-flame" /></span>
+            <p>DIAS ATIVOS</p>
+            <strong>{{ activeDays }} <small>/ 7</small></strong>
+            <div class="metric-track orange-track">
+              <span :style="{ width: activeDaysTrack }" />
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <div>
+            <div class="section-heading">
+              <div>
+                <p>SEU PLANO</p>
+                <h2>{{ nextWorkout && nextWorkout.day === today ? 'Treino de hoje' : 'Próximo treino' }}</h2>
+              </div>
+              <button
+                class="link-button"
+                @click="goTo('/workouts')"
+              >
+                Ver todos <UIcon name="i-lucide-arrow-right" />
+              </button>
+            </div>
+            <article
+              v-if="nextWorkout"
+              class="workout-card"
+            >
+              <div class="workout-image">
+                <UIcon name="i-lucide-dumbbell" />
+              </div>
+              <div class="workout-info">
+                <span>{{ nextWorkout.label.toUpperCase() }}</span>
+                <h3>{{ nextWorkout.workout.name }}</h3>
+                <p><UIcon name="i-lucide-list-checks" /> {{ exerciseLabel(nextWorkout.workout) }}</p>
+              </div>
+              <NuxtLink
+                to="/workouts"
+                class="start-button"
+                aria-label="Abrir treinos"
+              ><UIcon name="i-lucide-arrow-right" /></NuxtLink>
+            </article>
+            <div
+              v-else
+              class="page-state"
+            >
+              <UIcon name="i-lucide-calendar-days" />
+              <h2>Nenhum treino planejado</h2>
+              <p>Cadastre um treino e distribua os dias na agenda semanal.</p>
+              <button
+                class="primary-button"
+                @click="goTo('/agenda')"
+              >
+                Abrir agenda
+              </button>
+            </div>
+          </div>
+          <div class="weekly-card">
+            <div class="section-heading">
+              <div>
+                <p>CONSISTÊNCIA</p>
+                <h2>Meta semanal</h2>
+              </div>
+              <strong>{{ activeDays }} <small>/ 7</small></strong>
+            </div>
+            <div
+              class="week-days"
+              aria-label="Dias da semana com treino"
+            >
+              <span
+                v-for="day in weekDays"
+                :key="day.day"
+                :class="{ done: Boolean(day.workout), today: day.today }"
+                :title="day.workout ? `${day.short} · ${day.workout}` : 'Descanso'"
+              >{{ day.short }}</span>
+            </div>
+            <p>{{ consistencyMessage }}</p>
+          </div>
+        </section>
+      </template>
     </main>
   </div>
 </template>

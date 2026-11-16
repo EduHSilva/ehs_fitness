@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { readStoredInviteToken, storeInviteToken } from '~/features/students/invite'
+import type { SessionUser } from '~/composables/useSession'
+
+const route = useRoute()
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
@@ -78,31 +82,24 @@ type SessionPayload = {
   user?: Record<string, unknown>
 }
 
-function professionalRole(roles: string[]) {
-  if (roles.includes('HEALTH_NUTRITIONIST')) return 'nutritionist'
-  if (roles.includes('HEALTH_PERSONAL')) return 'personal_trainer'
-  return ''
-}
-
 function applySession(data?: SessionPayload) {
   if (!data?.token) throw new Error('Não foi possível entrar com estas credenciais.')
   // O login devolve o usuário "achatado" (id/username/email/roles); guardamos nesse
   // formato para o restante do app ler `user.id` e `user.roles`.
-  const loggedUser = data.user ?? {
+  const loggedUser = (data.user ?? {
     id: data.id,
     username: data.username,
     email: data.email,
     roles: data.roles ?? [],
     apps: data.apps ?? []
-  }
-  localStorage.setItem('user_token', data.token)
-  localStorage.setItem('user', JSON.stringify(loggedUser))
-  const roles = Array.isArray(loggedUser.roles) ? loggedUser.roles.map(String) : []
-  const role = professionalRole(roles)
-  if (role) localStorage.setItem('fitness_account_role', role)
-  else localStorage.removeItem('fitness_account_role')
-  if (!keepConnected.value) sessionStorage.setItem('session_only', 'true')
-  else sessionStorage.removeItem('session_only')
+  }) as SessionUser
+  saveSession(data.token, loggedUser, keepConnected.value)
+  storeInviteToken(route.query.invite)
+}
+
+function afterLogin() {
+  const invite = typeof route.query.invite === 'string' ? route.query.invite : readStoredInviteToken()
+  return navigateTo(invite ? { path: '/home', query: { invite } } : '/home')
 }
 
 function reportError(error: unknown) {
@@ -129,7 +126,7 @@ async function submit() {
     })
     if (!response.data?.token) throw new Error(response.message || 'Não foi possível entrar com estas credenciais.')
     applySession(response.data)
-    await navigateTo('/home')
+    await afterLogin()
   } catch (error: unknown) {
     reportError(error)
   } finally {
@@ -147,7 +144,7 @@ async function submitGoogle(idToken: string) {
     })
     if (!response.data?.token) throw new Error(response.message || 'Não foi possível entrar com estas credenciais.')
     applySession(response.data)
-    await navigateTo('/home')
+    await afterLogin()
   } catch (error: unknown) {
     reportError(error)
   } finally {
@@ -262,8 +259,17 @@ useSeoMeta({ title: 'Entrar' })
             {{ loading ? 'Entrando...' : 'Entrar na minha conta' }} <UIcon name="i-lucide-arrow-right" />
           </button>
           <template v-if="googleEnabled">
-            <div v-if="!googleFailed" class="google-divider"><span>ou</span></div>
-            <div v-if="!googleFailed" ref="googleSlot" class="google-slot" />
+            <div
+              v-if="!googleFailed"
+              class="google-divider"
+            >
+              <span>ou</span>
+            </div>
+            <div
+              v-if="!googleFailed"
+              ref="googleSlot"
+              class="google-slot"
+            />
           </template>
           <p
             v-if="googleFailed"

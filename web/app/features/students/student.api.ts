@@ -1,12 +1,62 @@
 import type { ApiRequest, ApiResponse } from '~/types/api'
-import type { Student } from './types'
+import type {
+  IncomingInviteCard,
+  InviteCard,
+  StudentCard,
+  StudentDomain,
+  StudentsResponse
+} from './types'
 
-// TODO: confirmar os endpoints e o contrato de alunos com o backend.
-export function fetchStudents(request: ApiRequest) {
-  return request<ApiResponse<Student[]>>('/fitness/students')
+export function fetchStudents(request: ApiRequest, domain?: StudentDomain) {
+  const query = domain ? `?domain=${domain}` : ''
+  return request<ApiResponse<StudentsResponse>>(`/fitness/students${query}`)
 }
 
-// TODO: confirmar se o aluno deve ser associado ao profissional no payload ou pelo token.
-export function createStudent(request: ApiRequest, student: Omit<Student, 'id'>) {
-  return request<ApiResponse<Student>>('/fitness/students', { method: 'POST', body: student })
+export function inviteStudent(request: ApiRequest, input: { email: string, domain: StudentDomain, goal: string }) {
+  return request<ApiResponse<InviteCard>>('/fitness/students', { method: 'POST', body: input })
+}
+
+export function fetchStudent(request: ApiRequest, linkId: number) {
+  return request<ApiResponse<StudentCard>>(`/fitness/students/${linkId}`)
+}
+
+export function updateStudentGoal(request: ApiRequest, linkId: number, goal: string) {
+  return request<ApiResponse<StudentCard>>(`/fitness/students/links/${linkId}`, {
+    method: 'PATCH',
+    body: { goal }
+  })
+}
+
+export function endStudentLink(request: ApiRequest, linkId: number) {
+  return request<ApiResponse<StudentCard>>(`/fitness/students/links/${linkId}`, { method: 'DELETE' })
+}
+
+export function fetchSentInvites(request: ApiRequest) {
+  return request<ApiResponse<InviteCard[]>>('/fitness/students/invites')
+}
+
+export function fetchIncomingInvites(request: ApiRequest) {
+  return request<ApiResponse<IncomingInviteCard[]>>('/fitness/students/invites')
+}
+
+export function resendInvite(request: ApiRequest, id: number) {
+  return request<ApiResponse<InviteCard>>(`/fitness/students/invites/${id}/resend`, { method: 'POST' })
+}
+
+export function revokeInvite(request: ApiRequest, id: number) {
+  return request<ApiResponse<InviteCard>>(`/fitness/students/invites/${id}`, { method: 'DELETE' })
+}
+
+export function acceptInvite(request: ApiRequest, token: string) {
+  return request<ApiResponse<InviteCard>>('/fitness/students/invites/accept', {
+    method: 'POST',
+    body: { token }
+  })
+}
+
+export function declineInvite(request: ApiRequest, token: string) {
+  return request<ApiResponse<InviteCard>>('/fitness/students/invites/decline', {
+    method: 'POST',
+    body: { token }
+  })
 }

@@ -9,5 +9,18 @@ export type Exercise = {
   body_part?: string
 }
 
-export type Workout = { id: number, name: string, createAt?: string, exercises?: Exercise[] }
+export type Workout = {
+  id: number
+  name: string
+  dayOfWeek?: number
+  createAt?: string
+  exercises?: Exercise[]
+}
+
 export type WorkoutExercise = Exercise & { series: number, repetitions: number }
+
+export type WorkoutWeekDay = {
+  dayOfWeek: number
+  workoutId: number | null
+  name?: string
+}

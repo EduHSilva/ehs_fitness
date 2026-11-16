@@ -1,22 +1,11 @@
 <script setup lang="ts">
-defineProps<{ active: 'home' | 'diet' | 'workouts' | 'habits' | 'students' }>()
+defineProps<{ active: 'home' | 'diet' | 'workouts' | 'agenda' | 'students' }>()
 
 const router = useRouter()
-const isProfessional = computed(() => {
-  if (!import.meta.client) return false
-  try {
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
-    const roles = Array.isArray(user.roles) ? user.roles.map(String) : []
-    return roles.includes('HEALTH_PERSONAL') || roles.includes('HEALTH_NUTRITIONIST')
-  } catch {
-    return false
-  }
-})
+const { isProfessional, clear } = useSession()
 
 function logout() {
-  localStorage.removeItem('user_token')
-  localStorage.removeItem('user')
-  sessionStorage.removeItem('session_only')
+  clear()
   router.push('/login')
 }
 </script>
@@ -44,9 +33,9 @@ function logout() {
         :class="{ active: active === 'workouts' }"
       ><UIcon name="i-lucide-dumbbell" /> Treinos</NuxtLink>
       <NuxtLink
-        to="/habits"
-        :class="{ active: active === 'habits' }"
-      ><UIcon name="i-lucide-list-checks" /> Habitos</NuxtLink>
+        to="/agenda"
+        :class="{ active: active === 'agenda' }"
+      ><UIcon name="i-lucide-calendar-days" /> Agenda</NuxtLink>
       <NuxtLink
         v-if="isProfessional"
         to="/students"

@@ -1,10 +1,14 @@
 # Fitness
 
-Aplicativo de fitness (dieta e treinos) com dois clientes neste monorepo:
+Aplicativo de fitness (treinos e alimentação) com dois clientes neste monorepo:
 
 - `web/` — aplicação web Nuxt 4 / Vue 3, publicada em `/app/fitness/`.
-- `legacy/flutter/` — app Flutter legado, mantido apenas como base para a
-  futura migração para Kotlin em `app/`.
+- `app/` — aplicativo Android nativo em Kotlin + Jetpack Compose (`com.ehs.fitness`).
+
+O app Flutter que existia em `legacy/flutter/` foi removido; o app Android é o cliente
+mobile oficial. O escopo-alvo é: **web** concentra a gestão (aluno autônomo, personal e
+nutricionista) e o **app** é um MVP somente leitura para o aluno. As regras estão em
+`regras-negocio.md`; a migração pendente, em `TODO.md`.
 
 ## Web
 
@@ -17,6 +21,31 @@ pnpm dev
 Em produção o app é servido pelo nginx dos microservices em
 `http://localhost/app/fitness/`. As chamadas `/api/*` do cliente são
 repassadas pelo nginx do container para o gateway dos microservices.
+
+## App Android
+
+```bash
+cd app
+./gradlew :app:assembleDebug       # APK de debug
+./gradlew :app:testDebugUnitTest   # testes JVM das regras de domínio
+```
+
+No Windows use `gradlew.bat`. O APK sai em `app/app/build/outputs/apk/debug/`.
+
+Configuração em `app/local.properties` (não versionado) ou por variável de ambiente:
+
+| Chave | Variável | Padrão |
+| --- | --- | --- |
+| `fitness.apiBaseUrl` | `FITNESS_API_BASE_URL` | `http://10.0.2.2/` |
+| `fitness.googleWebClientId` | `FITNESS_GOOGLE_WEB_CLIENT_ID` | vazio (botão Google oculto) |
+
+O padrão `10.0.2.2` é o host da máquina visto pelo emulador Android e aponta para o
+nginx local. Para o gateway direto, use `http://10.0.2.2:8080/`.
+
+Telas atuais: landing/login/cadastro, início, treinos (criar, editar, excluir), agenda
+semanal, alimentação (listar, criar e excluir refeição) e perfil (nome, tema, política,
+sair). A criação/edição ainda existe no app por compatibilidade; o escopo-alvo é somente
+leitura e a remoção depende da paridade de gestão no web (`TODO.md`).
 
 ## Docker
 
@@ -47,13 +76,3 @@ Login Google: o `NUXT_PUBLIC_GOOGLE_CLIENT_ID` é compilado no bundle
 estático, então precisa existir no build (local:
 `FITNESS_GOOGLE_CLIENT_ID=... docker compose build`; CI: var de repositório
 `FITNESS_GOOGLE_CLIENT_ID`). Vazio = botão oculto.
-
-## Flutter (legado)
-
-```bash
-cd legacy/flutter
-flutter pub get
-flutter run
-```
-
-Configure `legacy/flutter/.env` com `URL_API` antes de executar.

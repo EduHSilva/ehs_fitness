@@ -4,7 +4,7 @@ const appBase = useRuntimeConfig().app.baseURL
 const description = 'Planeje treinos, organize sua alimentação e acompanhe sua evolução em um só lugar.'
 
 useHead({
-  titleTemplate: (title) => (title ? `${title} · EHS Fitness` : 'EHS Fitness — Sua rotina em movimento'),
+  titleTemplate: title => (title ? `${title} · EHS Fitness` : 'EHS Fitness — Sua rotina em movimento'),
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
     { name: 'theme-color', content: '#4F46E5' },
