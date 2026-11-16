@@ -15,7 +15,7 @@ function logout() {
     <NuxtLink
       to="/home"
       class="brand app-brand"
-    ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span>EHS <b>Fitness</b></span></NuxtLink>
+    ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span><b>Fitness</b></span></NuxtLink>
     <nav
       class="app-nav"
       aria-label="Navegacao do aplicativo"
@@ -52,6 +52,7 @@ function logout() {
       >
         <UIcon name="i-lucide-log-out" /> Sair
       </button>
+      <p class="sidebar-credit">Desenvolvido por EHS Solutions</p>
     </div>
   </aside>
 </template>

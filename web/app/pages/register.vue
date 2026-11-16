@@ -37,7 +37,7 @@ useSeoMeta({ title: 'Criar conta' })
         to="/"
         class="brand inverse"
         aria-label="Voltar para a página inicial"
-      ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span>EHS <b>Fitness</b></span></NuxtLink>
+      ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span><b>Fitness</b></span></NuxtLink>
       <div class="register-aside-copy">
         <p class="eyebrow light">
           <span /> comece no seu ritmo
@@ -67,7 +67,7 @@ useSeoMeta({ title: 'Criar conta' })
         <NuxtLink
           to="/"
           class="brand"
-        ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span>EHS <b>Fitness</b></span></NuxtLink>
+        ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span><b>Fitness</b></span></NuxtLink>
       </div>
       <div class="register-content">
         <NuxtLink

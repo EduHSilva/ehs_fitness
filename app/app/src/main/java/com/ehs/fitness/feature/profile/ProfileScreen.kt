@@ -229,7 +229,7 @@ fun ProfileScreen(onLogout: () -> Unit) {
 
         item {
             Text(
-                "EHS Fitness v${container.appVersion}",
+                "Fitness v${container.appVersion} · Desenvolvido por EHS Solutions",
                 style = MaterialTheme.typography.labelSmall,
                 color = FitnessTheme.colors.subtle,
                 modifier = Modifier

@@ -4,6 +4,12 @@
 > O serviço `fitness` é um app Go; o login e as roles vêm do `users`.
 > Pendências de implementação: `TODO.md` (clientes) e `D:/Projetos/ehs_microservices/TODO.md`.
 
+## Marca
+
+- Nome exibido na web e no app: **Fitness**. Cor de marca indigo (`#4F46E5`).
+- Web (sidebar, landing, login) e app (drawer, login, perfil) exibem "Desenvolvido por
+  EHS Solutions".
+
 ## Escopo dos clientes
 
 - **Web** é a superfície de gestão. O aluno sem profissional cria e mantém os próprios

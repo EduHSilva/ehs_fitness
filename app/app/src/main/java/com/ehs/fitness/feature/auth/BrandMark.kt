@@ -42,11 +42,6 @@ fun BrandMark(dark: Boolean = false, modifier: Modifier = Modifier) {
         }
         Row {
             Text(
-                text = "EHS ",
-                style = MaterialTheme.typography.titleLarge,
-                color = if (dark) Color.White else MaterialTheme.colorScheme.onBackground,
-            )
-            Text(
                 text = "Fitness",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
