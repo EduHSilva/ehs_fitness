@@ -30,10 +30,10 @@ const benefits = [
       <NuxtLink
         to="/"
         class="brand"
-        aria-label="EHS Fitness, página inicial"
+        aria-label="Fitness, página inicial"
       >
         <span class="brand-mark"><UIcon name="i-lucide-activity" /></span>
-        <span>EHS <b>Fitness</b></span>
+        <span><b>Fitness</b></span>
       </NuxtLink>
 
       <nav
@@ -88,12 +88,12 @@ const benefits = [
 
         <div
           class="hero-visual"
-          aria-label="Prévia do painel EHS Fitness"
+          aria-label="Prévia do painel Fitness"
         >
           <div class="sun" /><div class="shape shape-one" /><div class="shape shape-two" />
           <div class="dashboard-card">
             <div class="dashboard-top">
-              <span class="mini-brand"><i><UIcon name="i-lucide-activity" /></i> EHS Fitness</span><span class="avatar">A</span>
+              <span class="mini-brand"><i><UIcon name="i-lucide-activity" /></i> Fitness</span><span class="avatar">A</span>
             </div>
             <p class="dashboard-greeting">
               Olá, Ana <span>✦</span>
@@ -140,7 +140,7 @@ const benefits = [
     </main>
 
     <footer class="legal-footer">
-      <span>EHS Fitness © {{ new Date().getFullYear() }}</span>
+      <span>Fitness © {{ new Date().getFullYear() }} · Desenvolvido por EHS Solutions</span>
       <a href="/app/privacidade/">Política de Privacidade</a>
     </footer>
   </div>

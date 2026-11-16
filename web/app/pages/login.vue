@@ -188,7 +188,7 @@ useSeoMeta({ title: 'Entrar' })
         to="/"
         class="brand inverse"
         aria-label="Voltar para a página inicial"
-      ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span>EHS <b>Fitness</b></span></NuxtLink>
+      ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span><b>Fitness</b></span></NuxtLink>
       <div class="aside-copy">
         <p class="eyebrow light">
           <span /> sua jornada começa aqui
@@ -204,7 +204,7 @@ useSeoMeta({ title: 'Entrar' })
         <NuxtLink
           to="/"
           class="brand"
-        ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span>EHS <b>Fitness</b></span></NuxtLink>
+        ><span class="brand-mark"><UIcon name="i-lucide-activity" /></span><span><b>Fitness</b></span></NuxtLink>
       </div>
       <div class="login-content">
         <NuxtLink

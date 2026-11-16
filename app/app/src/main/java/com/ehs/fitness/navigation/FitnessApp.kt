@@ -307,6 +307,13 @@ private fun FitnessDrawer(
                 Spacer(Modifier.width(8.dp))
                 Text("Sair", style = MaterialTheme.typography.labelSmall)
             }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "Desenvolvido por EHS Solutions",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.sidebarText,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
         }
     }
 }

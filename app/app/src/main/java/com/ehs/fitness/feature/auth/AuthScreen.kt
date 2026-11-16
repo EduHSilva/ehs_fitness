@@ -354,7 +354,7 @@ fun AuthScreen() {
                     Text("Política de Privacidade", style = MaterialTheme.typography.labelMedium)
                 }
                 Text(
-                    "EHS Fitness © ${java.time.Year.now()}",
+                    "Fitness © ${java.time.Year.now()} · Desenvolvido por EHS Solutions",
                     style = MaterialTheme.typography.labelSmall,
                     color = FitnessTheme.colors.subtle,
                 )
