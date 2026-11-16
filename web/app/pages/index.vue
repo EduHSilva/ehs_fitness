@@ -1,6 +1,20 @@
 <script setup lang="ts">
+import { storeInviteToken } from '~/features/students/invite'
+
 useSeoMeta({
   description: 'Planeje treinos, organize sua alimentação e acompanhe sua evolução em um só lugar.'
+})
+
+const route = useRoute()
+
+onMounted(() => {
+  const invite = route.query.invite
+  if (typeof invite !== 'string' || !invite.trim()) return
+  storeInviteToken(invite)
+  return navigateTo(
+    readSessionToken() ? { path: '/home', query: { invite } } : { path: '/login', query: { invite } },
+    { replace: true }
+  )
 })
 
 const benefits = [

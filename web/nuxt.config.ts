@@ -14,15 +14,15 @@ export default defineNuxtConfig({
 
   ssr: false,
 
-  app: {
-    baseURL: appBaseURL
-  },
-
   devtools: {
     enabled: true
   },
 
-  css: ['~/assets/css/main.css', '~/assets/css/habits.css'],
+  app: {
+    baseURL: appBaseURL
+  },
+
+  css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
     apiBase: env.URL_API || 'http://localhost/',

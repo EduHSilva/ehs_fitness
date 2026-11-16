@@ -8,15 +8,17 @@
 .history
 .svn/
 
-# Dart / Flutter (legacy/flutter — base para a futura migração Kotlin)
-**/doc/api/
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-legacy/flutter/build/
-legacy/flutter/.env
+# Android / Kotlin (app)
+.gradle/
+.kotlin/
+build/
+captures/
+.cxx/
+local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
 
 # Node / Nuxt (web)
 node_modules/

@@ -1,0 +1,45 @@
+package com.ehs.fitness.feature.workouts
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.ehs.fitness.core.network.userMessage
+import com.ehs.fitness.data.model.WeekDay
+import com.ehs.fitness.data.repository.WorkoutRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+data class WeekPlanUiState(
+    val loading: Boolean = true,
+    val error: String? = null,
+    val days: List<WeekDay> = emptyList(),
+)
+
+class WeekPlanViewModel(
+    private val repository: WorkoutRepository,
+) : ViewModel() {
+    private val _state = MutableStateFlow(WeekPlanUiState())
+    val state: StateFlow<WeekPlanUiState> = _state.asStateFlow()
+
+    init {
+        load()
+    }
+
+    fun load(silent: Boolean = false) {
+        viewModelScope.launch {
+            if (!silent) _state.update { it.copy(loading = true, error = null) }
+            try {
+                _state.update { it.copy(loading = false, error = null, days = repository.week()) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(loading = false, error = e.userMessage("Não foi possível carregar a agenda."))
+                }
+            }
+        }
+    }
+}

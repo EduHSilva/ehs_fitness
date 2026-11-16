@@ -1,0 +1,48 @@
+package com.ehs.fitness.core.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+// Tokens visuais do web (web/app/assets/css/main.css) traduzidos para Compose.
+// Componentes não usam hex direto: consomem MaterialTheme.colorScheme ou FitnessTheme.colors.
+
+internal val LightPrimary = Color(0xFF4F46E5)
+internal val LightOnPrimary = Color(0xFFFFFFFF)
+internal val LightPrimarySoft = Color(0xFFEEF2FF)
+internal val LightSecondary = Color(0xFF7C3AED)
+internal val LightSecondarySoft = Color(0xFFF5F3FF)
+internal val LightBackground = Color(0xFFFAFAFA)
+internal val LightSurface = Color(0xFFFFFFFF)
+internal val LightText = Color(0xFF18181B)
+internal val LightMuted = Color(0xFF71717A)
+internal val LightSubtle = Color(0xFFA1A1AA)
+internal val LightBorder = Color(0xFFE4E4E7)
+internal val LightBorderStrong = Color(0xFFD4D4D8)
+internal val LightSuccess = Color(0xFF15803D)
+internal val LightSuccessSoft = Color(0xFFF0FDF4)
+internal val LightDanger = Color(0xFFDC2626)
+internal val LightDangerSoft = Color(0xFFFEF2F2)
+internal val LightWarning = Color(0xFFB45309)
+internal val LightWarningSoft = Color(0xFFFFF7E6)
+internal val LightSidebar = Color(0xFF18181B)
+internal val LightSidebarText = Color(0xFFA1A1AA)
+
+internal val DarkPrimary = Color(0xFF818CF8)
+internal val DarkOnPrimary = Color(0xFF10123A)
+internal val DarkPrimarySoft = Color(0xFF272B4A)
+internal val DarkSecondary = Color(0xFFA78BFA)
+internal val DarkSecondarySoft = Color(0xFF2E2547)
+internal val DarkBackground = Color(0xFF121216)
+internal val DarkSurface = Color(0xFF1E1E24)
+internal val DarkText = Color(0xFFF4F4F5)
+internal val DarkMuted = Color(0xFFB4B4BC)
+internal val DarkSubtle = Color(0xFF8F8F99)
+internal val DarkBorder = Color(0xFF32323B)
+internal val DarkBorderStrong = Color(0xFF4A4A55)
+internal val DarkSuccess = Color(0xFF86EFAC)
+internal val DarkSuccessSoft = Color(0xFF1D3A2A)
+internal val DarkDanger = Color(0xFFFCA5A5)
+internal val DarkDangerSoft = Color(0xFF431E1E)
+internal val DarkWarning = Color(0xFFFCD34D)
+internal val DarkWarningSoft = Color(0xFF3F3212)
+internal val DarkSidebar = Color(0xFF0C0C10)
+internal val DarkSidebarText = Color(0xFFA1A1AA)

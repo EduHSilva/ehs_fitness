@@ -2,25 +2,61 @@
 import { useDiet } from '~/features/diet/useDiet'
 import { useStudentContext } from '~/features/students/useStudentContext'
 
-const { studentId, studentName } = useStudentContext()
-const diet = useDiet(studentId)
-const { meals, foods, loading, saving, searching, error: errorMessage, formError, showForm, mealName, mealHour, foodQuery, selectedFoods, load: loadMeals, addFood, removeFood, cancelForm, save: saveMeal } = diet
+const { studentId, studentName, canManage, loadContext } = useStudentContext()
+const diet = useDiet(studentId, canManage)
+const { meals, foods, loading, saving, searching, error: errorMessage, actionError, formError, showForm, editingId, mealName, mealHour, foodQuery, selectedFoods, pendingDelete, deleting, readOnly, load: loadMeals, addFood, removeFood, cancelForm, startEdit, save: saveMeal, requestDelete, cancelDelete, confirmDelete } = diet
 
-onMounted(loadMeals)
+const deleteOpen = computed({
+  get: () => Boolean(pendingDelete.value),
+  set: (open: boolean) => { if (!open) cancelDelete() }
+})
+const deleteDescription = computed(() => pendingDelete.value
+  ? `Deseja excluir "${pendingDelete.value.name}"? Essa ação não pode ser desfeita.`
+  : '')
+
+onMounted(async () => {
+  await Promise.all([loadContext(), loadMeals()])
+})
 useSeoMeta({ title: 'Alimentação' })
 </script>
 
 <template>
   <div class="app-shell">
+    <UModal
+      v-model:open="deleteOpen"
+      title="Excluir refeição"
+      :description="deleteDescription"
+      :dismissible="!deleting"
+    >
+      <template #footer>
+        <div class="form-actions">
+          <button
+            class="secondary-button"
+            :disabled="deleting"
+            @click="cancelDelete"
+          >
+            Cancelar
+          </button>
+          <button
+            class="primary-button"
+            :disabled="deleting"
+            @click="confirmDelete"
+          >
+            {{ deleting ? 'Excluindo...' : 'Excluir' }}
+          </button>
+        </div>
+      </template>
+    </UModal>
     <AppSidebar active="diet" />
     <main class="app-main module-page">
       <header class="app-topbar">
-        <div><p>SEU PLANO ALIMENTAR</p><h1>Alimentacao</h1></div><div class="topbar-actions">
+        <div><p>SEU PLANO ALIMENTAR</p><h1>Alimentação</h1></div><div class="topbar-actions">
           <button
+            v-if="!readOnly"
             class="secondary-button"
             @click="showForm = true"
           >
-            <UIcon name="i-lucide-plus" /> Nova refeicao
+            <UIcon name="i-lucide-plus" /> Nova refeição
           </button><button
             class="round-button"
             aria-label="Atualizar"
@@ -37,22 +73,34 @@ useSeoMeta({ title: 'Alimentação' })
       >
         <UIcon name="i-lucide-user-round" /> Você está gerenciando a dieta de <b>{{ studentName }}</b>. <NuxtLink to="/diet">Voltar para minha alimentação</NuxtLink>
       </p>
+      <p
+        v-if="studentName && readOnly"
+        class="notice-banner"
+      >
+        <UIcon name="i-lucide-eye" /> Você está visualizando a dieta de <b>{{ studentName }}</b> em modo somente leitura.
+      </p>
       <section class="module-intro">
         <div>
           <p class="eyebrow">
             <span /> rotina equilibrada
-          </p><h2>Suas refeicoes planejadas</h2><p>Consulte e organize as refeicoes da sua rotina.</p>
+          </p><h2>Suas refeições planejadas</h2><p>Consulte e organize as refeições da sua rotina.</p>
         </div><UIcon name="i-lucide-utensils" />
       </section>
+      <p
+        v-if="actionError"
+        class="form-error form-error-left"
+      >
+        {{ actionError }}
+      </p>
       <section
-        v-if="showForm"
+        v-if="showForm && !readOnly"
         class="registration-card"
       >
         <div class="registration-heading">
           <div>
             <p class="eyebrow">
-              <span /> nova refeicao
-            </p><h2>Cadastrar refeicao</h2>
+              <span /> {{ editingId ? 'editar refeição' : 'nova refeição' }}
+            </p><h2>{{ editingId ? 'Editar refeição' : 'Cadastrar refeição' }}</h2>
           </div><button
             class="icon-text-button"
             @click="cancelForm"
@@ -60,11 +108,11 @@ useSeoMeta({ title: 'Alimentação' })
             <UIcon name="i-lucide-x" /> Cancelar
           </button>
         </div><div class="form-two-columns">
-          <label>Nome da refeicao<input
+          <label>Nome da refeição<input
             v-model="mealName"
-            placeholder="Ex.: Cafe da manha"
+            placeholder="Ex.: Café da manhã"
             maxlength="80"
-          ></label><label>Horario<input
+          ></label><label>Horário<input
             v-model="mealHour"
             type="time"
           ></label>
@@ -88,8 +136,8 @@ useSeoMeta({ title: 'Alimentação' })
             Nenhum alimento encontrado.
           </p>
         </div><div class="selected-list food-list">
-          <h3>Alimentos da refeicao <small>({{ selectedFoods.length }})</small></h3><p v-if="!selectedFoods.length">
-            Busque e adicione os alimentos da refeicao.
+          <h3>Alimentos da refeição <small>({{ selectedFoods.length }})</small></h3><p v-if="!selectedFoods.length">
+            Busque e adicione os alimentos da refeição.
           </p><article
             v-for="food in selectedFoods"
             :key="food.food_id"
@@ -107,8 +155,8 @@ useSeoMeta({ title: 'Alimentação' })
                 v-model.number="food.quantity"
                 type="number"
                 min="1"
-              ></label><label>Observacao<input
-                v-model="food.obs"
+              ></label><label>Observação<input
+                v-model="food.observation"
                 placeholder="Ex.: cozido"
               ></label>
             </div>
@@ -129,7 +177,7 @@ useSeoMeta({ title: 'Alimentação' })
             :disabled="saving"
             @click="saveMeal"
           >
-            {{ saving ? 'Salvando...' : 'Salvar refeicao' }}
+            {{ saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Salvar refeição' }}
           </button>
         </div>
       </section>
@@ -155,11 +203,12 @@ useSeoMeta({ title: 'Alimentação' })
         v-else-if="!meals.length"
         class="page-state"
       >
-        <UIcon name="i-lucide-utensils" /><h2>Nenhuma refeicao cadastrada</h2><p>Comece organizando a sua primeira refeicao.</p><button
+        <UIcon name="i-lucide-utensils" /><h2>Nenhuma refeição cadastrada</h2><p>{{ readOnly ? 'Este aluno ainda não possui refeições cadastradas.' : 'Comece organizando a sua primeira refeição.' }}</p><button
+          v-if="!readOnly"
           class="primary-button"
           @click="showForm = true"
         >
-          Cadastrar refeicao
+          Cadastrar refeição
         </button>
       </div>
       <section
@@ -174,13 +223,33 @@ useSeoMeta({ title: 'Alimentação' })
           <div class="meal-card-icon">
             <UIcon name="i-lucide-salad" />
           </div><div class="meal-card-heading">
-            <span>{{ meal.hour || 'Sem horario' }}</span><h2>{{ meal.name }}</h2><p>{{ meal.foods?.length ?? 0 }} item(ns)</p>
+            <span>{{ meal.hour || 'Sem horário' }}</span><h2>{{ meal.name }}</h2><p>{{ meal.foods?.length ?? 0 }} item(ns)</p>
+            <div
+              v-if="!readOnly"
+              class="record-actions"
+            >
+              <button
+                type="button"
+                :aria-label="`Editar ${meal.name}`"
+                @click="startEdit(meal)"
+              >
+                <UIcon name="i-lucide-pencil" />
+              </button>
+              <button
+                type="button"
+                class="meal-card-delete"
+                :aria-label="`Excluir ${meal.name}`"
+                @click="requestDelete(meal)"
+              >
+                <UIcon name="i-lucide-trash-2" />
+              </button>
+            </div>
           </div><ul v-if="meal.foods?.length">
             <li
               v-for="(food, index) in meal.foods"
               :key="index"
             >
-              <span>{{ food.food?.name || food.name || 'Alimento' }}</span><small>{{ food.quantity ? `${food.quantity} g` : '' }} {{ food.observation || food.obs || '' }}</small>
+              <span>{{ food.food_name || food.food?.name || food.name || 'Alimento' }}</span><small>{{ food.quantity ? `${food.quantity} g` : '' }} {{ food.observation || '' }}</small>
             </li>
           </ul>
         </article>

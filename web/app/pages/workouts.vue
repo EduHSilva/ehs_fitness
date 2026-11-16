@@ -1,31 +1,105 @@
 <script setup lang="ts">
 import { useStudentContext } from '~/features/students/useStudentContext'
 import { useWorkouts } from '~/features/workouts/useWorkouts'
+import { dayLabel } from '~/features/workouts/week'
 
-const { studentId, studentName } = useStudentContext()
-const workoutManager = useWorkouts(studentId)
-const { workouts, catalog, loading, saving, error: errorMessage, formError, showForm, expandedWorkoutId, workoutName, selectedExercises, exerciseSearch, selectedBodyPart, bodyParts, filteredCatalog, load: loadWorkouts, openForm, addExercise, removeExercise, cancelForm, save: saveWorkout, exerciseDetail } = workoutManager
+const { studentId, studentName, canManage, loadContext } = useStudentContext()
+const {
+  workouts,
+  catalog,
+  loading,
+  saving,
+  error: errorMessage,
+  actionError,
+  formError,
+  showForm,
+  editingId,
+  expandedWorkoutId,
+  workoutName,
+  selectedExercises,
+  exerciseSearch,
+  selectedBodyPart,
+  pendingDelete,
+  deleting,
+  readOnly,
+  bodyParts,
+  filteredCatalog,
+  load,
+  openForm,
+  addExercise,
+  removeExercise,
+  cancelForm,
+  save: saveWorkout,
+  requestDelete,
+  cancelDelete,
+  confirmDelete,
+  exerciseDetail
+} = useWorkouts(studentId, canManage)
 
-onMounted(loadWorkouts)
+const deleteOpen = computed({
+  get: () => Boolean(pendingDelete.value),
+  set: (open: boolean) => { if (!open) cancelDelete() }
+})
+const deleteDescription = computed(() => pendingDelete.value
+  ? `Deseja excluir "${pendingDelete.value.name}"? A agenda dos dias com esse treino fica em descanso.`
+  : '')
+
+onMounted(async () => {
+  await Promise.all([loadContext(), load()])
+})
 useSeoMeta({ title: 'Treinos' })
 </script>
 
 <template>
   <div class="app-shell">
+    <UModal
+      v-model:open="deleteOpen"
+      title="Excluir treino"
+      :description="deleteDescription"
+      :dismissible="!deleting"
+    >
+      <template #footer>
+        <div class="form-actions">
+          <button
+            class="secondary-button"
+            :disabled="deleting"
+            @click="cancelDelete"
+          >
+            Cancelar
+          </button>
+          <button
+            class="primary-button"
+            :disabled="deleting"
+            @click="confirmDelete"
+          >
+            {{ deleting ? 'Excluindo...' : 'Excluir' }}
+          </button>
+        </div>
+      </template>
+    </UModal>
     <AppSidebar active="workouts" />
     <main class="app-main module-page">
       <header class="app-topbar">
-        <div><p>SUA BIBLIOTECA</p><h1>Treinos</h1></div><div class="topbar-actions">
+        <div><p>SUA BIBLIOTECA</p><h1>Treinos</h1></div>
+        <div class="topbar-actions">
           <button
+            v-if="!readOnly"
             class="secondary-button"
-            @click="openForm"
+            @click="openForm()"
           >
             <UIcon name="i-lucide-plus" /> Novo treino
-          </button><button
+          </button>
+          <NuxtLink
+            to="/agenda"
+            class="secondary-button"
+          >
+            <UIcon name="i-lucide-calendar-days" /> Agenda
+          </NuxtLink>
+          <button
             class="round-button"
             aria-label="Atualizar"
             :disabled="loading"
-            @click="loadWorkouts"
+            @click="load"
           >
             <UIcon name="i-lucide-refresh-cw" />
           </button>
@@ -35,7 +109,14 @@ useSeoMeta({ title: 'Treinos' })
         v-if="studentName"
         class="student-context"
       >
-        <UIcon name="i-lucide-user-round" /> Você está gerenciando o treino de <b>{{ studentName }}</b>. <NuxtLink to="/workouts">Voltar para meus treinos</NuxtLink>
+        <UIcon name="i-lucide-user-round" />
+        <template v-if="readOnly">
+          Você está consultando os treinos de <b>{{ studentName }}</b>. Apenas o personal trainer do vínculo pode editar.
+        </template>
+        <template v-else>
+          Você está gerenciando os treinos de <b>{{ studentName }}</b>.
+        </template>
+        <NuxtLink to="/workouts">Voltar para meus treinos</NuxtLink>
       </p>
       <section class="module-intro workout-intro">
         <div>
@@ -44,15 +125,22 @@ useSeoMeta({ title: 'Treinos' })
           </p><h2>Seus treinos cadastrados</h2><p>Revise os exercicios e acompanhe sua rotina.</p>
         </div><UIcon name="i-lucide-dumbbell" />
       </section>
+      <p
+        v-if="actionError"
+        class="form-error form-error-left"
+        role="alert"
+      >
+        {{ actionError }}
+      </p>
       <section
-        v-if="showForm"
+        v-if="showForm && !readOnly"
         class="registration-card"
       >
         <div class="registration-heading">
           <div>
             <p class="eyebrow">
-              <span /> novo planejamento
-            </p><h2>Cadastrar treino</h2>
+              <span /> {{ editingId ? 'editando' : 'novo planejamento' }}
+            </p><h2>{{ editingId ? 'Editar treino' : 'Cadastrar treino' }}</h2>
           </div><button
             class="icon-text-button"
             @click="cancelForm"
@@ -153,7 +241,7 @@ useSeoMeta({ title: 'Treinos' })
             :disabled="saving"
             @click="saveWorkout"
           >
-            {{ saving ? 'Salvando...' : 'Salvar treino' }}
+            {{ saving ? 'Salvando...' : (editingId ? 'Salvar alteracoes' : 'Salvar treino') }}
           </button>
         </div>
       </section>
@@ -171,7 +259,7 @@ useSeoMeta({ title: 'Treinos' })
       >
         <UIcon name="i-lucide-circle-alert" /><p>{{ errorMessage }}</p><button
           class="primary-button"
-          @click="loadWorkouts"
+          @click="load"
         >
           Tentar novamente
         </button>
@@ -179,9 +267,14 @@ useSeoMeta({ title: 'Treinos' })
         v-else-if="!workouts.length"
         class="page-state"
       >
-        <UIcon name="i-lucide-dumbbell" /><h2>Nenhum treino cadastrado</h2><p>Comece criando seu primeiro treino.</p><button
+        <UIcon name="i-lucide-dumbbell" /><h2>Nenhum treino cadastrado</h2><p v-if="readOnly">
+          O profissional responsável ainda não cadastrou treinos.
+        </p><p v-else>
+          Comece criando seu primeiro treino.
+        </p><button
+          v-if="!readOnly"
           class="primary-button"
-          @click="openForm"
+          @click="openForm()"
         >
           Cadastrar treino
         </button>
@@ -195,13 +288,33 @@ useSeoMeta({ title: 'Treinos' })
           :key="workout.id"
           class="workout-list-card"
         >
-          <button
-            class="workout-summary"
-            type="button"
-            @click="expandedWorkoutId = expandedWorkoutId === workout.id ? null : workout.id"
-          >
-            <span class="workout-list-icon"><UIcon name="i-lucide-dumbbell" /></span><span><h2>{{ workout.name }}</h2><p>{{ workout.exercises?.length ?? 0 }} exercicios</p></span><UIcon :name="expandedWorkoutId === workout.id ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" />
-          </button><ul
+          <div class="workout-card-head">
+            <button
+              class="workout-summary"
+              type="button"
+              @click="expandedWorkoutId = expandedWorkoutId === workout.id ? null : workout.id"
+            >
+              <span class="workout-list-icon"><UIcon name="i-lucide-dumbbell" /></span><span><h2>{{ workout.name }}</h2><p>{{ workout.dayOfWeek && workout.dayOfWeek >= 1 && workout.dayOfWeek <= 7 ? dayLabel(workout.dayOfWeek) : 'Sem dia na agenda' }} · {{ workout.exercises?.length ?? 0 }} exercicios</p></span><UIcon :name="expandedWorkoutId === workout.id ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" />
+            </button>
+            <div
+              v-if="!readOnly"
+              class="workout-card-actions"
+            >
+              <button
+                aria-label="Editar treino"
+                @click="openForm(workout)"
+              >
+                <UIcon name="i-lucide-pencil" />
+              </button>
+              <button
+                aria-label="Excluir treino"
+                @click="requestDelete(workout)"
+              >
+                <UIcon name="i-lucide-trash-2" />
+              </button>
+            </div>
+          </div>
+          <ul
             v-if="expandedWorkoutId === workout.id"
             class="exercise-list"
           >
