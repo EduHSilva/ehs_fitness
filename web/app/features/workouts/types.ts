@@ -5,8 +5,10 @@ export type Exercise = {
   repetitions?: number
   load?: number
   rest_seconds?: number
+  duration_seconds?: number
   notes?: string
   body_part?: string
+  custom?: boolean
 }
 
 export type Workout = {
@@ -17,7 +19,10 @@ export type Workout = {
   exercises?: Exercise[]
 }
 
-export type WorkoutExercise = Exercise & { series: number, repetitions: number }
+export type WorkoutExercise = Exercise & { series: number, repetitions: number, rest_seconds: number }
+
+/** Exercício no formulário: cardio usa `duration_minutes` em vez de séries/repetições. */
+export type WorkoutFormExercise = WorkoutExercise & { duration_minutes?: number }
 
 export type WorkoutWeekDay = {
   dayOfWeek: number

@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 
 data class DietUiState(
     val loading: Boolean = true,
+    val refreshing: Boolean = false,
     val error: String? = null,
     val meals: List<Meal> = emptyList(),
 )
@@ -31,14 +32,21 @@ class DietViewModel(
     fun load(silent: Boolean = false) {
         viewModelScope.launch {
             if (!silent) _state.update { it.copy(loading = true, error = null) }
+            else _state.update { it.copy(refreshing = true) }
             try {
                 val meals = repository.meals()
-                _state.update { it.copy(loading = false, error = null, meals = meals) }
+                _state.update {
+                    it.copy(loading = false, refreshing = false, error = null, meals = meals)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 _state.update {
-                    it.copy(loading = false, error = e.userMessage("Não foi possível carregar suas refeições."))
+                    it.copy(
+                        loading = false,
+                        refreshing = false,
+                        error = e.userMessage("Não foi possível carregar suas refeições."),
+                    )
                 }
             }
         }

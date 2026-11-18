@@ -9,6 +9,7 @@ data class WorkoutExercise(
     val repetitions: Int = 12,
     val load: Double? = null,
     val restSeconds: Int? = null,
+    val durationSeconds: Int? = null,
     val notes: String = "",
 )
 
@@ -38,4 +39,22 @@ data class Meal(
     val name: String,
     val hour: String,
     val foods: List<MealFood> = emptyList(),
+)
+
+/**
+ * Acompanhamento solicitado pelo profissional no web: creatina e meta diária de
+ * cardio (em minutos; 0 desativa o registro).
+ */
+data class TrackingConfig(
+    val showCreatine: Boolean = true,
+    val dailyCardio: Double = 0.0,
+) {
+    val cardioEnabled: Boolean get() = dailyCardio > 0.0
+    val enabled: Boolean get() = showCreatine || cardioEnabled
+}
+
+/** Registro do próprio dia. */
+data class DailyTracking(
+    val creatine: Boolean = false,
+    val cardio: Double = 0.0,
 )

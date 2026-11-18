@@ -13,12 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
@@ -26,15 +27,21 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,13 +50,18 @@ import com.ehs.fitness.core.ui.components.ContentCard
 import com.ehs.fitness.core.ui.components.ErrorBanner
 import com.ehs.fitness.core.ui.components.LoadingScreen
 import com.ehs.fitness.core.ui.components.ProgressBar
+import com.ehs.fitness.core.ui.components.RefreshableLazyColumn
+import com.ehs.fitness.core.ui.components.ScreenDivider
 import com.ehs.fitness.core.ui.components.Tag
 import com.ehs.fitness.core.ui.theme.FitnessTheme
+import com.ehs.fitness.data.model.DailyTracking
+import com.ehs.fitness.data.model.TrackingConfig
 import com.ehs.fitness.data.model.Workout
 import com.ehs.fitness.domain.workouts.WeekPlan
 import com.ehs.fitness.domain.workouts.WorkoutFormat
 import com.ehs.fitness.ui.appViewModel
 import java.time.LocalDate
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
@@ -58,7 +70,9 @@ fun HomeScreen(
     onOpenDiet: () -> Unit,
     onOpenWeek: () -> Unit,
 ) {
-    val vm: HomeViewModel = appViewModel { HomeViewModel(it.workoutRepository, it.dietRepository) }
+    val vm: HomeViewModel = appViewModel {
+        HomeViewModel(it.workoutRepository, it.dietRepository, it.trackingRepository)
+    }
     val state by vm.state.collectAsStateWithLifecycle()
 
     val today = LocalDate.now().dayOfWeek.value
@@ -67,7 +81,9 @@ fun HomeScreen(
     val next = WeekPlan.nextWorkout(state.workouts, today)
     val plannedDays = state.workouts.count { it.dayOfWeek in 1..7 }
 
-    LazyColumn(
+    RefreshableLazyColumn(
+        isRefreshing = state.refreshing,
+        onRefresh = { vm.load(silent = true) },
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -122,6 +138,20 @@ fun HomeScreen(
                         value = "$plannedDays/7",
                         label = "Dias ativos",
                         modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            val tracking = state.tracking
+            if (tracking != null && tracking.enabled) {
+                item {
+                    DailyTrackingCard(
+                        config = tracking,
+                        today = state.trackingToday,
+                        saving = state.trackingSaving,
+                        error = state.trackingError,
+                        onCreatine = vm::setCreatine,
+                        onCardio = vm::setCardio,
                     )
                 }
             }
@@ -392,6 +422,123 @@ private fun FocusCard(todayWorkout: String?, next: String?, onOpenWorkouts: () -
         }
     }
 }
+
+@Composable
+private fun DailyTrackingCard(
+    config: TrackingConfig,
+    today: DailyTracking,
+    saving: Boolean,
+    error: String?,
+    onCreatine: (Boolean) -> Unit,
+    onCardio: (Double) -> Unit,
+) {
+    ContentCard {
+        Text(
+            "ACOMPANHAMENTO DE HOJE",
+            style = MaterialTheme.typography.labelSmall,
+            color = FitnessTheme.colors.subtle,
+        )
+        Text("Creatina e cardio", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Solicitado pelo seu profissional no web.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        if (config.showCreatine) {
+            Spacer(Modifier.height(12.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Creatina", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        if (today.creatine) "Registrada hoje" else "Ainda não registrada",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (today.creatine) FitnessTheme.colors.success else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = today.creatine,
+                    onCheckedChange = onCreatine,
+                    enabled = !saving,
+                )
+            }
+        }
+
+        if (config.cardioEnabled) {
+            if (config.showCreatine) {
+                Spacer(Modifier.height(10.dp))
+                ScreenDivider()
+                Spacer(Modifier.height(12.dp))
+            } else {
+                Spacer(Modifier.height(12.dp))
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Cardio do dia", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "${trackingMinutes(today.cardio)} de ${trackingMinutes(config.dailyCardio)} min",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Icon(
+                    Icons.Filled.Favorite,
+                    contentDescription = null,
+                    tint = FitnessTheme.colors.secondary,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            ProgressBar(fraction = (today.cardio / config.dailyCardio).toFloat())
+            Spacer(Modifier.height(12.dp))
+            CardioForm(saving = saving, onSave = onCardio)
+        }
+
+        if (error != null) {
+            Spacer(Modifier.height(10.dp))
+            ErrorBanner(error)
+        }
+    }
+}
+
+@Composable
+private fun CardioForm(saving: Boolean, onSave: (Double) -> Unit) {
+    var minutes by remember { mutableStateOf("") }
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedTextField(
+            value = minutes,
+            onValueChange = { value -> minutes = value.filter(Char::isDigit).take(3) },
+            label = { Text("Minutos hoje") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            shape = RoundedCornerShape(9.dp),
+            modifier = Modifier.weight(1f),
+        )
+        Button(
+            onClick = { minutes.toDoubleOrNull()?.let(onSave) },
+            enabled = !saving && minutes.isNotBlank(),
+            shape = RoundedCornerShape(9.dp),
+            modifier = Modifier.height(54.dp),
+        ) {
+            Text("Registrar")
+        }
+    }
+}
+
+private fun trackingMinutes(value: Double): String =
+    if (value % 1.0 == 0.0) value.toInt().toString()
+    else String.format(Locale.forLanguageTag("pt-BR"), "%.1f", value)
 
 @Composable
 private fun MetricCard(value: String, label: String, modifier: Modifier = Modifier) {
