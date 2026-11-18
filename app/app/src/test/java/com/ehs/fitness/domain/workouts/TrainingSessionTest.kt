@@ -123,6 +123,21 @@ class TrainingSessionTest {
     }
 
     @Test
+    fun `ajuste de carga vale so para o exercicio atual`() {
+        val session = TrainingSession.start(workout, nowMillis = 0L)!!
+
+        val updated = session.updateLoad(42.5, nowMillis = 500L)
+
+        assertEquals(42.5, updated.currentExercise!!.load!!, 0.0)
+        assertEquals(42.5, updated.exercises.first().load!!, 0.0)
+        assertNull(updated.exercises[1].load)
+        assertEquals(500L, updated.updatedAtMillis)
+
+        val cleared = updated.updateLoad(0.0, nowMillis = 600L)
+        assertNull(cleared.currentExercise!!.load)
+    }
+
+    @Test
     fun `cronometro e rotulo da parte do corpo`() {
         assertEquals("0:45", WorkoutFormat.countdown(45))
         assertEquals("1:05", WorkoutFormat.countdown(65))

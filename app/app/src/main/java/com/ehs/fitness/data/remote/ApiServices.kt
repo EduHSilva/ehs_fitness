@@ -28,6 +28,9 @@ interface WorkoutApi {
 
     @GET("fitness/workouts/week")
     suspend fun week(): Envelope<List<WorkoutWeekDayDto>>
+
+    @PUT("fitness/workout/load")
+    suspend fun updateLoad(@Body body: UpdateWorkoutLoadRequest): Envelope<WorkoutDto>
 }
 
 interface DietApi {

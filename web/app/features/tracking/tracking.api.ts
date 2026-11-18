@@ -15,6 +15,7 @@ export function saveTrackingConfig(request: ApiRequest, input: TrackingInput, st
     body: {
       showCreatine: input.showCreatine,
       dailyCardio: input.dailyCardio,
+      showWorkout: input.showWorkout,
       ...(studentId ? { student_id: studentId } : {})
     }
   })

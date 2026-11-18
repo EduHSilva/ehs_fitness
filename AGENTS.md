@@ -17,7 +17,7 @@ por ambiente para consumir a API externa. O app Flutter legado foi removido.
   vinculados e `HEALTH_NUTRITIONIST` gerencia a dieta; ambos leem o plano completo.
 - **App Android**: MVP de consulta e execução para o aluno (início, treinos, agenda,
   dieta e perfil). Gestão de plano acontece apenas no web; o início também registra o
-  acompanhamento diário (creatina e cardio) quando ativado no web.
+  acompanhamento diário (creatina, treino e cardio) quando ativado no web.
 - O aluno com profissional ativo no domínio fica somente leitura naquele domínio
   (personal → treinos/agenda; nutricionista → dieta).
 - Regras completas e matriz de permissões: `regras-negocio.md`. Pendências: `TODO.md`.
@@ -70,9 +70,12 @@ Regras para Kotlin/Compose:
   editar ou excluir treino, agenda ou refeição. A gestão do plano acontece apenas no web.
 - Executar um treino é permitido: a tela de execução mostra o exercício atual e o
   cronômetro de descanso. O progresso fica apenas no app (`SharedPreferences`), não é
-  enviado à API e precisa sobreviver a sair da tela ou encerrar o processo.
+  enviado à API e precisa sobreviver a sair da tela ou encerrar o processo. A exceção é
+  a carga do exercício atual, que pode ser ajustada na execução e é gravada no plano via
+  `PUT /fitness/workout/load` quando online; erro de conexão ou `403` mantém o ajuste
+  apenas na execução, com aviso na tela.
 - Cardio é uma etapa única por tempo (`duration_seconds`), nunca séries × repetições.
-- O acompanhamento diário (creatina e cardio em minutos) é definido no web
+- O acompanhamento diário (creatina, treino e cardio em minutos) é definido no web
   (`GET/PUT /fitness/config/user`); o app só exibe e registra
   (`GET/PUT /fitness/config/history`). O histórico diário é privado do aluno.
 - Novas dependências entram em `app/gradle/libs.versions.toml` e são referenciadas por

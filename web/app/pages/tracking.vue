@@ -10,6 +10,7 @@ const {
   actionError,
   feedback,
   showCreatine,
+  showWorkout,
   dailyCardio,
   readOnly,
   cardioEnabled,
@@ -65,7 +66,7 @@ useSeoMeta({ title: 'Acompanhamento' })
       <section class="module-intro workout-intro">
         <div>
           <p class="eyebrow">
-            <span /> creatina e cardio
+            <span /> creatina, cardio e treino
           </p>
           <h2>O que acompanhar todos os dias</h2>
           <p>As opções ativas aparecem no app do aluno para o registro diário.</p>
@@ -135,6 +136,17 @@ useSeoMeta({ title: 'Acompanhamento' })
             <span>
               <b>Creatina</b>
               <small>Pedir o registro diário de creatina.</small>
+            </span>
+          </label>
+          <label class="tracking-option">
+            <input
+              v-model="showWorkout"
+              type="checkbox"
+              :disabled="readOnly || saving"
+            >
+            <span>
+              <b>Treino</b>
+              <small>Pedir o registro diário de treino.</small>
             </span>
           </label>
           <label class="tracking-option">

@@ -79,6 +79,13 @@ data class WorkoutWeekDayDto(
     val name: String? = null,
 )
 
+@Serializable
+data class UpdateWorkoutLoadRequest(
+    @SerialName("workout_id") val workoutId: Int,
+    @SerialName("exercise_id") val exerciseId: Int,
+    val load: Double,
+)
+
 // ---------------------------------------------------------------------------
 // Acompanhamento diário (serviço fitness)
 // ---------------------------------------------------------------------------
@@ -88,6 +95,7 @@ data class UserConfigDto(
     val id: Int? = null,
     val showCreatine: Boolean = true,
     val dailyCardio: Double = 0.0,
+    val showWorkout: Boolean = false,
 )
 
 @Serializable
@@ -96,12 +104,14 @@ data class HistoryDto(
     val eventDate: String? = null,
     val creatine: Boolean = false,
     val cardio: Double = 0.0,
+    val trained: Boolean = false,
 )
 
 @Serializable
 data class UpdateHistoryRequest(
     val creatine: Boolean? = null,
     val cardio: Double? = null,
+    val trained: Boolean? = null,
 )
 
 // ---------------------------------------------------------------------------

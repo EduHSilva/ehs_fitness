@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.EmojiEvents
@@ -28,6 +29,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -89,8 +92,11 @@ fun TrainingScreen(workoutId: Int, onClose: () -> Unit) {
         state.session != null -> ActiveTraining(
             session = state.session!!,
             remainingSeconds = state.remainingSeconds,
+            loadSaving = state.loadSaving,
+            loadError = state.loadError,
             onCompleteSeries = vm::completeSeries,
             onSkipRest = vm::skipRest,
+            onUpdateLoad = vm::updateLoad,
             onRequestExit = { confirmExit = true },
         )
     }
@@ -122,8 +128,11 @@ fun TrainingScreen(workoutId: Int, onClose: () -> Unit) {
 private fun ActiveTraining(
     session: TrainingSession,
     remainingSeconds: Int,
+    loadSaving: Boolean,
+    loadError: String?,
     onCompleteSeries: () -> Unit,
     onSkipRest: () -> Unit,
+    onUpdateLoad: (Double) -> Unit,
     onRequestExit: () -> Unit,
 ) {
     val exercise = session.currentExercise ?: return
@@ -166,7 +175,10 @@ private fun ActiveTraining(
                 exercise = exercise,
                 currentSeries = session.currentSeries,
                 lastSeries = lastSeries,
+                loadSaving = loadSaving,
+                loadError = loadError,
                 onCompleteSeries = onCompleteSeries,
+                onUpdateLoad = onUpdateLoad,
             )
         }
 
@@ -270,7 +282,10 @@ private fun ExerciseCard(
     exercise: TrainingExercise,
     currentSeries: Int,
     lastSeries: Boolean,
+    loadSaving: Boolean,
+    loadError: String?,
     onCompleteSeries: () -> Unit,
+    onUpdateLoad: (Double) -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -308,6 +323,15 @@ private fun ExerciseCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            if (!exercise.isCardio) {
+                Spacer(Modifier.height(4.dp))
+                LoadEditor(
+                    exercise = exercise,
+                    saving = loadSaving,
+                    error = loadError,
+                    onSave = onUpdateLoad,
+                )
+            }
             Spacer(Modifier.height(4.dp))
             Button(
                 onClick = onCompleteSeries,
@@ -322,6 +346,71 @@ private fun ExerciseCard(
             }
         }
     }
+}
+
+@Composable
+private fun LoadEditor(
+    exercise: TrainingExercise,
+    saving: Boolean,
+    error: String?,
+    onSave: (Double) -> Unit,
+) {
+    var value by remember(exercise.exerciseId) {
+        mutableStateOf(exercise.load?.let(WorkoutFormat::formatDecimal) ?: "")
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = { value = loadInput(it) },
+                label = { Text("Carga (kg)") },
+                placeholder = { Text("Sem carga") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                shape = RoundedCornerShape(9.dp),
+                modifier = Modifier.weight(1f),
+            )
+            Button(
+                onClick = { onSave((value.toDoubleOrNull() ?: 0.0).coerceIn(0.0, 1000.0)) },
+                enabled = !saving,
+                shape = RoundedCornerShape(9.dp),
+                modifier = Modifier.height(54.dp),
+            ) {
+                Text(if (saving) "Salvando..." else "Atualizar")
+            }
+        }
+        Text(
+            "A carga vale para as próximas execuções quando o app estiver online.",
+            style = MaterialTheme.typography.labelSmall,
+            color = FitnessTheme.colors.subtle,
+        )
+        if (error != null) {
+            Text(
+                error,
+                style = MaterialTheme.typography.bodySmall,
+                color = FitnessTheme.colors.danger,
+            )
+        }
+    }
+}
+
+private fun loadInput(raw: String): String {
+    val text = StringBuilder()
+    var hasSeparator = false
+    for (char in raw.replace(',', '.')) {
+        if (char.isDigit()) {
+            text.append(char)
+        } else if (char == '.' && !hasSeparator) {
+            text.append(char)
+            hasSeparator = true
+        }
+        if (text.length >= 6) break
+    }
+    return text.toString()
 }
 
 @Composable
@@ -362,20 +451,23 @@ private fun ExerciseRow(order: Int, exercise: TrainingExercise, current: Boolean
                 )
             }
         }
-        Text(
-            exercise.name,
-            style = MaterialTheme.typography.bodySmall,
-            color = if (done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            if (exercise.isCardio) WorkoutFormat.durationLabel(exercise.durationSeconds)
-            else "${exercise.totalSeries}×${exercise.repetitions}",
-            style = MaterialTheme.typography.labelSmall,
-            color = FitnessTheme.colors.subtle,
-        )
+        Column(
+            Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                exercise.name,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                WorkoutFormat.exerciseDetail(exercise),
+                style = MaterialTheme.typography.labelSmall,
+                color = FitnessTheme.colors.subtle,
+            )
+        }
     }
 }
 
