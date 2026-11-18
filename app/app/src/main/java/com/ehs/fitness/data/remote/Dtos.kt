@@ -87,6 +87,19 @@ data class UpdateWorkoutLoadRequest(
 )
 
 // ---------------------------------------------------------------------------
+// Vínculos com profissionais (serviço fitness)
+// ---------------------------------------------------------------------------
+
+@Serializable
+data class MyLinkDto(
+    @SerialName("link_id") val linkId: Int? = null,
+    val domain: String? = null,
+    @SerialName("professional_id") val professionalId: String? = null,
+    @SerialName("professional_name") val professionalName: String? = null,
+    val goal: String? = null,
+)
+
+// ---------------------------------------------------------------------------
 // Acompanhamento diário (serviço fitness)
 // ---------------------------------------------------------------------------
 

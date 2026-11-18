@@ -1,6 +1,7 @@
 package com.ehs.fitness.data.mappers
 
 import com.ehs.fitness.data.model.DailyTracking
+import com.ehs.fitness.data.model.ManagedLink
 import com.ehs.fitness.data.model.Meal
 import com.ehs.fitness.data.model.MealFood
 import com.ehs.fitness.data.model.TrackingConfig
@@ -11,6 +12,7 @@ import com.ehs.fitness.data.remote.ExerciseDto
 import com.ehs.fitness.data.remote.HistoryDto
 import com.ehs.fitness.data.remote.MealDto
 import com.ehs.fitness.data.remote.MealFoodDto
+import com.ehs.fitness.data.remote.MyLinkDto
 import com.ehs.fitness.data.remote.UserConfigDto
 import com.ehs.fitness.data.remote.WorkoutDto
 import com.ehs.fitness.data.remote.WorkoutWeekDayDto
@@ -79,6 +81,14 @@ object Mappers {
         showWorkout = dto.showWorkout,
         dailyCardio = dto.dailyCardio.coerceAtLeast(0.0),
     )
+
+    fun managedLink(dto: MyLinkDto): ManagedLink? {
+        val domain = dto.domain?.trim()?.uppercase()?.takeIf { it.isNotEmpty() } ?: return null
+        return ManagedLink(
+            domain = domain,
+            professionalName = dto.professionalName.orEmpty().trim(),
+        )
+    }
 
     fun dailyTracking(dto: HistoryDto) = DailyTracking(
         creatine = dto.creatine,

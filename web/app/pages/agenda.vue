@@ -3,7 +3,7 @@ import { useStudentContext } from '~/features/students/useStudentContext'
 import { useWeekPlan } from '~/features/workouts/useWeekPlan'
 import { WEEK_DAYS } from '~/features/workouts/week'
 
-const { studentId, studentName, canManage, loadContext } = useStudentContext()
+const { studentId, studentName, canManageWorkouts, managerName, loadContext } = useStudentContext()
 const {
   days,
   workouts,
@@ -17,7 +17,7 @@ const {
   load,
   assign,
   save
-} = useWeekPlan(studentId, canManage)
+} = useWeekPlan(studentId, canManageWorkouts)
 
 function selected(day: number) {
   return days.value.find(item => item.dayOfWeek === day)?.workoutId ?? ''
@@ -73,6 +73,12 @@ useSeoMeta({ title: 'Agenda' })
           Você está gerenciando a agenda de <b>{{ studentName }}</b>.
         </template>
         <NuxtLink to="/agenda">Voltar para minha agenda</NuxtLink>
+      </p>
+      <p
+        v-if="!studentName && readOnly && managerName('PERSONAL')"
+        class="notice-banner"
+      >
+        <UIcon name="i-lucide-lock" /> Sua agenda é gerenciada por <b>{{ managerName('PERSONAL') }}</b>.
       </p>
       <section class="module-intro workout-intro">
         <div>

@@ -42,8 +42,8 @@ class AuthRepository(
     }
 
     /**
-     * Revalida a sessão salva ao abrir o app. `/users/auth/me` devolve `token: null`,
-     * então o token local é preservado e o id só é sobrescrito quando vier preenchido.
+     * Revalida a sessão salva ao abrir o app. `/users/auth/me` devolve um token renovado
+     * (expiração deslizante); o id só é sobrescrito quando vier preenchido.
      */
     suspend fun initAuth() {
         val stored = sessionManager.session.value ?: return
@@ -51,7 +51,7 @@ class AuthRepository(
             val fresh = api.me().unwrap()
             sessionManager.save(
                 AuthSession(
-                    token = stored.token,
+                    token = fresh.token?.takeIf { it.isNotBlank() } ?: stored.token,
                     user = toUser(fresh).copy(
                         id = fresh.id.ifBlank { stored.user.id },
                         name = fresh.username.ifBlank { stored.user.name },

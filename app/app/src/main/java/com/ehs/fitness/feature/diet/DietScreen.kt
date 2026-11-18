@@ -44,7 +44,7 @@ import com.ehs.fitness.ui.appViewModel
 
 @Composable
 fun DietScreen() {
-    val vm: DietViewModel = appViewModel { DietViewModel(it.dietRepository) }
+    val vm: DietViewModel = appViewModel { DietViewModel(it.dietRepository, it.studentRepository) }
     val state by vm.state.collectAsStateWithLifecycle()
 
     RefreshableLazyColumn(
@@ -78,7 +78,11 @@ fun DietScreen() {
         }
 
         item {
-            EmptyNote("Para alterar a dieta, acesse a versão web do EHS Fitness.")
+            val manager = state.managedBy
+            EmptyNote(
+                if (manager != null) "Gerenciado por $manager."
+                else "Para alterar a dieta, acesse a versão web do EHS Fitness.",
+            )
         }
 
         when {

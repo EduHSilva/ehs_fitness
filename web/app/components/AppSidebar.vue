@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ active: 'home' | 'diet' | 'workouts' | 'agenda' | 'tracking' | 'students' }>()
+defineProps<{ active: 'home' | 'diet' | 'workouts' | 'agenda' | 'tracking' | 'students' | 'profile' }>()
 
 const router = useRouter()
 const { isProfessional, clear } = useSession()
@@ -47,9 +47,12 @@ function logout() {
       ><UIcon name="i-lucide-users" /> Alunos</NuxtLink>
     </nav>
     <div class="sidebar-bottom">
-      <button type="button">
+      <NuxtLink
+        to="/profile"
+        :class="{ active: active === 'profile' }"
+      >
         <UIcon name="i-lucide-settings-2" /> Configuracoes
-      </button>
+      </NuxtLink>
       <button
         type="button"
         @click="logout"

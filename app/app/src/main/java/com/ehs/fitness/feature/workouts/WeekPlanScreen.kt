@@ -42,7 +42,7 @@ import com.ehs.fitness.ui.appViewModel
 
 @Composable
 fun WeekPlanScreen() {
-    val vm: WeekPlanViewModel = appViewModel { WeekPlanViewModel(it.workoutRepository) }
+    val vm: WeekPlanViewModel = appViewModel { WeekPlanViewModel(it.workoutRepository, it.studentRepository) }
     val state by vm.state.collectAsStateWithLifecycle()
     val plannedCount = state.days.count { it.workoutId != null }
 
@@ -77,7 +77,11 @@ fun WeekPlanScreen() {
         }
 
         item {
-            EmptyNote("Para alterar a agenda, acesse a versão web do EHS Fitness.")
+            val manager = state.managedBy
+            EmptyNote(
+                if (manager != null) "Gerenciado por $manager."
+                else "Para alterar a agenda, acesse a versão web do EHS Fitness.",
+            )
         }
 
         when {

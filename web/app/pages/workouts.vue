@@ -4,7 +4,7 @@ import { useStudentContext } from '~/features/students/useStudentContext'
 import { useWorkouts } from '~/features/workouts/useWorkouts'
 import { dayLabel } from '~/features/workouts/week'
 
-const { studentId, studentName, canManage, loadContext } = useStudentContext()
+const { studentId, studentName, canManageWorkouts, managerName, loadContext } = useStudentContext()
 const {
   workouts,
   catalog,
@@ -46,7 +46,7 @@ const {
   confirmDelete,
   exerciseDetail,
   isCardioExercise
-} = useWorkouts(studentId, canManage)
+} = useWorkouts(studentId, canManageWorkouts)
 
 const deleteOpen = computed({
   get: () => Boolean(pendingDelete.value),
@@ -129,6 +129,12 @@ useSeoMeta({ title: 'Treinos' })
           Você está gerenciando os treinos de <b>{{ studentName }}</b>.
         </template>
         <NuxtLink to="/workouts">Voltar para meus treinos</NuxtLink>
+      </p>
+      <p
+        v-if="!studentName && readOnly && managerName('PERSONAL')"
+        class="notice-banner"
+      >
+        <UIcon name="i-lucide-lock" /> Seus treinos e sua agenda são gerenciados por <b>{{ managerName('PERSONAL') }}</b>.
       </p>
       <section class="module-intro workout-intro">
         <div>
