@@ -68,6 +68,8 @@ Regras para Kotlin/Compose:
   exato) e `observation` (não `obs`) nos alimentos.
 - O escopo do app é **somente leitura** para o plano: não adicione telas ou ações de criar,
   editar ou excluir treino, agenda ou refeição. A gestão do plano acontece apenas no web.
+  Com vínculo ativo no domínio, o aviso "acesse a versão web" vira "Gerenciado por
+  <profissional>" (`GET /fitness/students/links`, alimentado pelo `StudentRepository`).
 - Executar um treino é permitido: a tela de execução mostra o exercício atual e o
   cronômetro de descanso. O progresso fica apenas no app (`SharedPreferences`), não é
   enviado à API e precisa sobreviver a sair da tela ou encerrar o processo. A exceção é
@@ -106,7 +108,9 @@ O app contorna o que dá e o restante está registrado no TODO do backend:
 - Existe vínculo aluno ↔ profissional com convites por e-mail (`/fitness/students`):
   o profissional usa `student_id` (nunca `user_id`) para ler/gravar o plano do aluno
   vinculado; o backend responde 403 quando o aluno tem profissional ativo no domínio.
-  Não há endpoint para o aluno listar os próprios vínculos ativos (ver TODO do backend).
+  O aluno consulta os próprios vínculos em `GET /fitness/students/links` (domínio,
+  profissional); os clientes usam isso para o gate somente leitura e o aviso
+  "Gerenciado por <profissional>".
 - O exercício do treino carrega `duration_seconds` (cardio por tempo; 0 = séries e
   repetições). `GET/PUT /fitness/config/user` aceitam `student_id` para qualquer
   profissional com vínculo ativo; `GET /fitness/config/history` responde 404 sem
@@ -142,7 +146,7 @@ Regras para Vue/Nuxt:
 - Chamadas HTTP ficam em `*.api.ts`; estado, validação e tratamento de carregamento/erro ficam em `use<Domínio>.ts`.
 - Não use mocks persistidos no navegador para simular recursos da API. Se o contrato ainda não estiver disponível, crie a função de integração, marque o ponto com `TODO` e apresente o erro ao usuário.
 - O armazenamento local de token e usuário autenticado é permitido como persistência de sessão, não como fonte de dados de domínio.
-- A área profissional é identificada pelas roles `HEALTH_PERSONAL`/`HEALTH_NUTRITIONIST`. O aluno com profissional ativo no domínio deve ver o plano em modo somente leitura (sem botões de criar/editar/excluir); o gate depende do status do vínculo na API.
+- A área profissional é identificada pelas roles `HEALTH_PERSONAL`/`HEALTH_NUTRITIONIST`. O aluno com profissional ativo no domínio deve ver o plano em modo somente leitura (sem botões de criar/editar/excluir, com aviso "Gerenciado por <profissional>"); o gate usa `GET /fitness/students/links` (feature `students/useManagedLinks.ts`) e não depende do 403.
 - Ao integrar o plano de um aluno, envie `student_id` (nunca `user_id`) e valide o papel no domínio: personal escreve treinos/agenda e nutricionista escreve dieta; ambos leem o plano completo.
 - O web é a única superfície de gestão de plano; o app é consulta. Não mova criação/edição para o app.
 
