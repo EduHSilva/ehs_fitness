@@ -2,6 +2,7 @@ import type { ApiRequest, ApiResponse } from '~/types/api'
 import type {
   IncomingInviteCard,
   InviteCard,
+  MyLinkCard,
   StudentCard,
   StudentDomain,
   StudentsResponse
@@ -32,11 +33,15 @@ export function endStudentLink(request: ApiRequest, linkId: number) {
 }
 
 export function fetchSentInvites(request: ApiRequest) {
-  return request<ApiResponse<InviteCard[]>>('/fitness/students/invites')
+  return request<ApiResponse<InviteCard[]>>('/fitness/students/invites?direction=sent')
 }
 
 export function fetchIncomingInvites(request: ApiRequest) {
-  return request<ApiResponse<IncomingInviteCard[]>>('/fitness/students/invites')
+  return request<ApiResponse<IncomingInviteCard[]>>('/fitness/students/invites?direction=received')
+}
+
+export function fetchMyLinks(request: ApiRequest) {
+  return request<ApiResponse<MyLinkCard[]>>('/fitness/students/links')
 }
 
 export function resendInvite(request: ApiRequest, id: number) {

@@ -65,3 +65,12 @@ data class DailyTracking(
     val trained: Boolean = false,
     val cardio: Double = 0.0,
 )
+
+/**
+ * Vínculo ativo com o profissional que gerencia o plano do aluno.
+ * `domain` é `PERSONAL` (treinos/agenda) ou `NUTRITIONIST` (dieta).
+ */
+data class ManagedLink(
+    val domain: String,
+    val professionalName: String,
+)

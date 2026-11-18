@@ -64,7 +64,10 @@
   vínculo deixa de valer e o acesso é revogado.
 - O profissional não edita dados da conta do aluno (nome, e-mail, senha, roles). Ele vê
   nome, e-mail, objetivo e o plano.
-- Um profissional não pode convidar a própria conta.
+- Um profissional não pode convidar a própria conta, nem uma conta que já tenha role de
+  profissional (`409 inviteProfessional`): quem gerencia não é convidado como aluno.
+- O aluno consulta os próprios vínculos ativos em `GET /fitness/students/links` para saber
+  quem gerencia cada domínio; a consulta exige `HEALTH_USER` (403 caso contrário).
 
 ## Propriedade e acesso aos dados
 
@@ -155,28 +158,38 @@
   registra os minutos de cardio (upsert em `/fitness/config/history`); o histórico é
   privado do aluno.
 - Profissionais usam o web para gestão. Se entrarem no app, veem apenas os próprios
-  dados, sem superfície de gestão.
+  dados, sem superfície de gestão. Contas com `HEALTH_USER` + role de profissional
+  continuam sendo alunos no app.
+- O app usa `GET /fitness/students/links` para trocar o aviso "acesse a versão web" por
+  "Gerenciado por <profissional>" no domínio com vínculo ativo (personal → treinos e
+  agenda; nutricionista → dieta). Sem vínculo, o aviso continua sendo a referência ao web.
 - Convites, aceite/recusa e encerramento de vínculo são feitos no web; o app não gerencia
   vínculos.
 - A remoção do CRUD do app só pode acontecer depois que o web tiver paridade de agenda,
   edição e exclusão, para não perder capacidade de gestão.
 
-## Contrato do backend (implementado em 2026-11-16)
+## Contrato do backend (atualizado em 2026-11-18)
 
 Rotas expostas pelo gateway em `/fitness/**` (Swagger em `/fitness/swagger/index.html`).
 `student_id` é opcional nas rotas de plano: ausente = o próprio usuário do token.
 
 - `POST /fitness/students` — convite. Body `{email, domain, goal}`. Exige role do
   domínio (`HEALTH_PERSONAL`/`HEALTH_NUTRITIONIST`). `409` para convite pendente
-  duplicado ou aluno já vinculado no domínio; `400` para e-mail/domínio inválido ou a
-  própria conta.
+  duplicado, aluno já vinculado no domínio ou conta com role de profissional; `400` para
+  e-mail/domínio inválido ou a própria conta.
 - `GET /fitness/students?domain=` — profissional: `students[]` (link_id, student_id,
   name, email, goal, domain, since) e `invites[]` pendentes.
+- `GET /fitness/students/links` — aluno: vínculos ativos vistos do lado do aluno
+  (`link_id`, `domain`, `professional_id`, `professional_name`, `goal`, `since`);
+  `403` para conta sem `HEALTH_USER`, lista vazia sem vínculos. É o que permite ao web
+  esconder o CRUD antes do 403 e ao app indicar quem gerencia o plano.
 - `GET /fitness/students/{link_id}` — cartão do vínculo (próprio profissional ou aluno).
 - `PATCH /fitness/students/links/{link_id}` — profissional dono edita `{goal}`.
 - `DELETE /fitness/students/links/{link_id}` — qualquer lado encerra o vínculo ativo.
-- `GET /fitness/students/invites` — profissional: convites enviados; aluno: recebidos
-  (com `professional_name`).
+- `GET /fitness/students/invites?direction=sent|received` — `direction` explícito
+  resolve a precedência de papéis (conta `HEALTH_PERSONAL` + `HEALTH_USER` vê as duas
+  listas); sem o parâmetro, profissional recebe os enviados e aluno os recebidos.
+  `direction` desconhecido responde `400`. Recebidos trazem `professional_name`.
 - `POST /fitness/students/invites/{id}/resend` — pendente ou expirado (novo token/prazo).
 - `DELETE /fitness/students/invites/{id}` — revoga um convite pendente.
 - `POST /fitness/students/invites/accept` e `/decline` — body `{token}`. O aceite exige
@@ -199,20 +212,18 @@ Rotas expostas pelo gateway em `/fitness/**` (Swagger em `/fitness/swagger/index
   cria o default no primeiro acesso e aceita `student_id` para qualquer profissional com
   vínculo ativo; `/fitness/config/history` carrega `creatine`, `trained` e `cardio`
   (404 sem registro no dia).
+- CORS do serviço aceita `PATCH` (além de GET/POST/PUT/DELETE), para chamadas diretas do
+  navegador a `PATCH /fitness/students/links/:id`.
+- Swagger (`fitness/docs`) regenerado em 2026-11-18: inclui `duration_seconds`,
+  `student_id` na configuração, `GET /students/links` e `direction` nos convites.
 
 ## Pendências de implementação
 
-O backend acima está pronto. Falta nos clientes:
+Os clientes já seguem o contrato acima (web como superfície de gestão, app somente
+leitura com "Gerenciado por"). Continuam abertos:
 
-- Web: telas de convite (e-mail + domínio + objetivo), aceite/recusa pelo link
-  `?invite=`, lista de alunos/convites, edição do objetivo e encerramento; consumir
-  `student_id` (remover `user_id`), `GET /workouts/week` e `food_id`; exibir o link de
-  Swagger no admin.
-- Gate de somente leitura por domínio no web e remoção do CRUD no app.
 - Hábitos: fora do MVP atual (treinos, dieta e profissionais). A tela web deve ser
   removida/ocultada até o produto priorizar e existir contrato.
-- Cálculo de calorias/consistência no dashboard (hoje é derivado dos dados carregados).
-
-Enquanto os clientes não forem atualizados, vale o comportamento atual deles; o alvo
-acima é o que deve orientar as mudanças.
+- Cálculo de calorias/consistência no dashboard da home (a dieta mostra o total do dia;
+  a home ainda deriva o resumo dos dados carregados).
 

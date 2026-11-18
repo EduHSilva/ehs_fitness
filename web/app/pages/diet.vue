@@ -2,9 +2,9 @@
 import { useDiet } from '~/features/diet/useDiet'
 import { useStudentContext } from '~/features/students/useStudentContext'
 
-const { studentId, studentName, canManage, loadContext } = useStudentContext()
-const diet = useDiet(studentId, canManage)
-const { meals, foods, loading, saving, searching, error: errorMessage, actionError, formError, showForm, editingId, mealName, mealHour, foodQuery, selectedFoods, pendingDelete, deleting, readOnly, load: loadMeals, addFood, removeFood, cancelForm, startEdit, save: saveMeal, requestDelete, cancelDelete, confirmDelete, foodMacros, mealMacros, hasMacros } = diet
+const { studentId, studentName, canManageDiet, managerName, loadContext } = useStudentContext()
+const diet = useDiet(studentId, canManageDiet)
+const { meals, foods, loading, saving, searching, error: errorMessage, actionError, formError, showForm, editingId, mealName, mealHour, foodQuery, selectedFoods, pendingDelete, deleting, readOnly, load: loadMeals, addFood, removeFood, cancelForm, startEdit, save: saveMeal, requestDelete, cancelDelete, confirmDelete, foodMacros, mealMacros, dayMacros, dayCalories, hasMacros } = diet
 
 const deleteOpen = computed({
   get: () => Boolean(pendingDelete.value),
@@ -78,6 +78,12 @@ useSeoMeta({ title: 'Alimentação' })
         class="notice-banner"
       >
         <UIcon name="i-lucide-eye" /> Você está visualizando a dieta de <b>{{ studentName }}</b> em modo somente leitura.
+      </p>
+      <p
+        v-if="!studentName && readOnly && managerName('NUTRITIONIST')"
+        class="notice-banner"
+      >
+        <UIcon name="i-lucide-lock" /> Sua dieta é gerenciada por <b>{{ managerName('NUTRITIONIST') }}</b>.
       </p>
       <section class="module-intro">
         <div>
@@ -219,58 +225,68 @@ useSeoMeta({ title: 'Alimentação' })
           Cadastrar refeição
         </button>
       </div>
-      <section
-        v-else
-        class="meal-grid"
-      >
-        <article
-          v-for="meal in meals"
-          :key="meal.id"
-          class="meal-card"
+      <template v-else>
+        <section
+          v-if="dayMacros"
+          class="day-summary"
         >
-          <div class="meal-card-icon">
-            <UIcon name="i-lucide-salad" />
-          </div><div class="meal-card-heading">
-            <span>{{ meal.hour || 'Sem horário' }}</span><h2>{{ meal.name }}</h2><p>{{ meal.foods?.length ?? 0 }} item(ns)</p>
-            <div
-              v-if="!readOnly"
-              class="record-actions"
-            >
-              <button
-                type="button"
-                :aria-label="`Editar ${meal.name}`"
-                @click="startEdit(meal)"
-              >
-                <UIcon name="i-lucide-pencil" />
-              </button>
-              <button
-                type="button"
-                class="meal-card-delete"
-                :aria-label="`Excluir ${meal.name}`"
-                @click="requestDelete(meal)"
-              >
-                <UIcon name="i-lucide-trash-2" />
-              </button>
-            </div>
-          </div><ul v-if="meal.foods?.length">
-            <li
-              v-for="(food, index) in meal.foods"
-              :key="index"
-            >
-              <span>{{ food.food_name || food.food?.name || food.name || 'Alimento' }}</span><small>{{ food.quantity ? `${food.quantity} g` : '' }} {{ food.observation || '' }}<span
-                v-if="hasMacros(food)"
-                class="meal-food-macros"
-              >{{ foodMacros(food, Number(food.quantity) || 0) }}</span></small>
-            </li>
-          </ul>
-          <p
-            v-if="mealMacros(meal)"
-            class="meal-totals"
+          <span class="metric-icon orange"><UIcon name="i-lucide-flame" /></span>
+          <div>
+            <p>TOTAL DO DIA</p>
+            <strong>{{ dayCalories }} kcal</strong>
+            <small>{{ dayMacros }}</small>
+          </div>
+        </section>
+        <section class="meal-grid">
+          <article
+            v-for="meal in meals"
+            :key="meal.id"
+            class="meal-card"
           >
-            Total: {{ mealMacros(meal) }}
-          </p>
-        </article>
-      </section>
+            <div class="meal-card-icon">
+              <UIcon name="i-lucide-salad" />
+            </div><div class="meal-card-heading">
+              <span>{{ meal.hour || 'Sem horário' }}</span><h2>{{ meal.name }}</h2><p>{{ meal.foods?.length ?? 0 }} item(ns)</p>
+              <div
+                v-if="!readOnly"
+                class="record-actions"
+              >
+                <button
+                  type="button"
+                  :aria-label="`Editar ${meal.name}`"
+                  @click="startEdit(meal)"
+                >
+                  <UIcon name="i-lucide-pencil" />
+                </button>
+                <button
+                  type="button"
+                  class="meal-card-delete"
+                  :aria-label="`Excluir ${meal.name}`"
+                  @click="requestDelete(meal)"
+                >
+                  <UIcon name="i-lucide-trash-2" />
+                </button>
+              </div>
+            </div><ul v-if="meal.foods?.length">
+              <li
+                v-for="(food, index) in meal.foods"
+                :key="index"
+              >
+                <span>{{ food.food_name || food.food?.name || food.name || 'Alimento' }}</span><small>{{ food.quantity ? `${food.quantity} g` : '' }} {{ food.observation || '' }}<span
+                  v-if="hasMacros(food)"
+                  class="meal-food-macros"
+                >{{ foodMacros(food, Number(food.quantity) || 0) }}</span></small>
+              </li>
+            </ul>
+            <p
+              v-if="mealMacros(meal)"
+              class="meal-totals"
+            >
+              Total: {{ mealMacros(meal) }}
+            </p>
+          </article>
+        </section>
+      </template>
     </main>
   </div>
 </template>

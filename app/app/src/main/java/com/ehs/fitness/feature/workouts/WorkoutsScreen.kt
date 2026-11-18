@@ -49,7 +49,7 @@ import com.ehs.fitness.ui.appViewModel
 @Composable
 fun WorkoutsScreen(onStartWorkout: (Int) -> Unit) {
     val vm: WorkoutsViewModel = appViewModel {
-        WorkoutsViewModel(it.workoutRepository, it.trainingRepository)
+        WorkoutsViewModel(it.workoutRepository, it.trainingRepository, it.studentRepository)
     }
     val state by vm.state.collectAsStateWithLifecycle()
 
@@ -86,7 +86,11 @@ fun WorkoutsScreen(onStartWorkout: (Int) -> Unit) {
         }
 
         item {
-            EmptyNote("Para criar ou editar treinos, acesse a versão web do EHS Fitness.")
+            val manager = state.managedBy
+            EmptyNote(
+                if (manager != null) "Gerenciado por $manager."
+                else "Para criar ou editar treinos, acesse a versão web do EHS Fitness.",
+            )
         }
 
         when {

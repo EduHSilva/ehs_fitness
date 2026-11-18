@@ -34,6 +34,16 @@ export type StudentsResponse = {
   invites: InviteCard[]
 }
 
+/** Vínculo ativo visto pelo aluno. */
+export type MyLinkCard = {
+  link_id: number
+  domain: StudentDomain
+  professional_id: string
+  professional_name: string
+  goal: string
+  since?: string
+}
+
 export type ManagedModule = 'workouts' | 'diet' | 'tracking'
 
 export function domainLabel(domain: StudentDomain): string {

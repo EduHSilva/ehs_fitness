@@ -38,6 +38,11 @@ interface DietApi {
     suspend fun meals(): Envelope<List<MealDto>>
 }
 
+interface StudentApi {
+    @GET("fitness/students/links")
+    suspend fun links(): Envelope<List<MyLinkDto>>
+}
+
 interface TrackingApi {
     @GET("fitness/config/user")
     suspend fun config(): Envelope<UserConfigDto>
