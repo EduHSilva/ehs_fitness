@@ -34,7 +34,7 @@ export type StudentsResponse = {
   invites: InviteCard[]
 }
 
-export type ManagedModule = 'workouts' | 'diet'
+export type ManagedModule = 'workouts' | 'diet' | 'tracking'
 
 export function domainLabel(domain: StudentDomain): string {
   return domain === 'PERSONAL' ? 'Personal trainer' : 'Nutricionista'

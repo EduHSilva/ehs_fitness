@@ -34,3 +34,14 @@ interface DietApi {
     @GET("fitness/diet/meals")
     suspend fun meals(): Envelope<List<MealDto>>
 }
+
+interface TrackingApi {
+    @GET("fitness/config/user")
+    suspend fun config(): Envelope<UserConfigDto>
+
+    @GET("fitness/config/history")
+    suspend fun today(): Envelope<HistoryDto>
+
+    @PUT("fitness/config/history")
+    suspend fun updateToday(@Body body: UpdateHistoryRequest): Envelope<HistoryDto>
+}

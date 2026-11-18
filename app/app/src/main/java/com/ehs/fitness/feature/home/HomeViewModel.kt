@@ -3,9 +3,12 @@ package com.ehs.fitness.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ehs.fitness.core.network.userMessage
+import com.ehs.fitness.data.model.DailyTracking
 import com.ehs.fitness.data.model.Meal
+import com.ehs.fitness.data.model.TrackingConfig
 import com.ehs.fitness.data.model.Workout
 import com.ehs.fitness.data.repository.DietRepository
+import com.ehs.fitness.data.repository.TrackingRepository
 import com.ehs.fitness.data.repository.WorkoutRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,14 +19,20 @@ import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val loading: Boolean = true,
+    val refreshing: Boolean = false,
     val error: String? = null,
     val workouts: List<Workout> = emptyList(),
     val meals: List<Meal> = emptyList(),
+    val tracking: TrackingConfig? = null,
+    val trackingToday: DailyTracking = DailyTracking(),
+    val trackingSaving: Boolean = false,
+    val trackingError: String? = null,
 )
 
 class HomeViewModel(
     private val workoutRepository: WorkoutRepository,
     private val dietRepository: DietRepository,
+    private val trackingRepository: TrackingRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
@@ -35,12 +44,16 @@ class HomeViewModel(
     fun load(silent: Boolean = false) {
         viewModelScope.launch {
             if (!silent) _state.update { it.copy(loading = true, error = null) }
+            else _state.update { it.copy(refreshing = true) }
             val workouts = attempt { workoutRepository.workouts() }
             val meals = attempt { dietRepository.meals() }
+            val config = attempt { trackingRepository.config() }
+            val today = attempt { trackingRepository.today() }
             val failure = workouts.exceptionOrNull() ?: meals.exceptionOrNull()
             _state.update {
                 it.copy(
                     loading = false,
+                    refreshing = false,
                     error = if (workouts.isFailure && meals.isFailure) {
                         failure?.userMessage("Não foi possível carregar seu painel.")
                     } else {
@@ -48,7 +61,37 @@ class HomeViewModel(
                     },
                     workouts = workouts.getOrDefault(it.workouts),
                     meals = meals.getOrDefault(it.meals),
+                    tracking = config.getOrNull() ?: it.tracking,
+                    trackingToday = today.getOrNull() ?: it.trackingToday,
                 )
+            }
+        }
+    }
+
+    fun setCreatine(value: Boolean) {
+        register(_state.value.trackingToday.copy(creatine = value))
+    }
+
+    fun setCardio(minutes: Double) {
+        register(_state.value.trackingToday.copy(cardio = minutes.coerceIn(0.0, 600.0)))
+    }
+
+    private fun register(next: DailyTracking) {
+        if (_state.value.trackingSaving) return
+        viewModelScope.launch {
+            _state.update { it.copy(trackingSaving = true, trackingError = null) }
+            try {
+                val saved = trackingRepository.register(next)
+                _state.update { it.copy(trackingSaving = false, trackingToday = saved) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        trackingSaving = false,
+                        trackingError = e.userMessage("Não foi possível salvar o acompanhamento."),
+                    )
+                }
             }
         }
     }

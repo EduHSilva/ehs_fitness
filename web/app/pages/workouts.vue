@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BODY_PART_OPTIONS, bodyPartLabel } from '~/features/workouts/bodyParts'
 import { useStudentContext } from '~/features/students/useStudentContext'
 import { useWorkouts } from '~/features/workouts/useWorkouts'
 import { dayLabel } from '~/features/workouts/week'
@@ -21,11 +22,19 @@ const {
   selectedBodyPart,
   pendingDelete,
   deleting,
+  showExerciseForm,
+  exerciseName,
+  exerciseBodyPart,
+  creatingExercise,
+  exerciseFormError,
   readOnly,
   bodyParts,
   filteredCatalog,
   load,
   openForm,
+  openExerciseForm,
+  cancelExerciseForm,
+  createCustomExercise,
   addExercise,
   removeExercise,
   cancelForm,
@@ -33,7 +42,8 @@ const {
   requestDelete,
   cancelDelete,
   confirmDelete,
-  exerciseDetail
+  exerciseDetail,
+  isCardioExercise
 } = useWorkouts(studentId, canManage)
 
 const deleteOpen = computed({
@@ -154,15 +164,66 @@ useSeoMeta({ title: 'Treinos' })
         ></label><div class="catalog-grid">
           <div>
             <div class="catalog-heading">
-              <h3>Exercicios disponiveis</h3><small>{{ filteredCatalog.length }} de {{ catalog.length }}</small>
-            </div><div class="exercise-filters">
-              <label class="search-input">Pesquisar exercicio
+              <h3>Exercícios disponíveis</h3><div class="catalog-heading-meta">
+                <small>{{ filteredCatalog.length }} de {{ catalog.length }}</small><button
+                  v-if="!readOnly && !showExerciseForm"
+                  type="button"
+                  class="icon-text-button"
+                  @click="openExerciseForm"
+                >
+                  <UIcon name="i-lucide-plus" /> Criar exercício
+                </button>
+              </div>
+            </div><form
+              v-if="showExerciseForm && !readOnly"
+              class="custom-exercise-form"
+              @submit.prevent="createCustomExercise"
+            >
+              <label>Nome do exercício<input
+                v-model="exerciseName"
+                maxlength="80"
+                placeholder="Ex.: Tríceps testa"
+              ></label><label>Parte do corpo<select v-model="exerciseBodyPart">
+                <option
+                  value=""
+                  disabled
+                >
+                  Selecione
+                </option><option
+                  v-for="option in BODY_PART_OPTIONS"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select></label><p
+                v-if="exerciseFormError"
+                class="form-error form-error-left"
+              >
+                {{ exerciseFormError }}
+              </p><div class="form-actions">
+                <button
+                  type="button"
+                  class="secondary-button"
+                  @click="cancelExerciseForm"
+                >
+                  Cancelar
+                </button><button
+                  type="submit"
+                  class="primary-button"
+                  :disabled="creatingExercise"
+                >
+                  {{ creatingExercise ? 'Criando...' : 'Criar exercício' }}
+                </button>
+              </div>
+            </form><div class="exercise-filters">
+              <label>Pesquisar exercício<div class="search-input">
                 <UIcon name="i-lucide-search" /><input
                   v-model="exerciseSearch"
                   type="search"
                   placeholder="Nome ou parte do corpo"
                 >
-              </label><label>Parte do corpo<select v-model="selectedBodyPart">
+              </div></label><label>Parte do corpo<select v-model="selectedBodyPart">
                 <option value="">
                   Todas as partes do corpo
                 </option><option
@@ -170,7 +231,7 @@ useSeoMeta({ title: 'Treinos' })
                   :key="bodyPart"
                   :value="bodyPart"
                 >
-                  {{ bodyPart }}
+                  {{ bodyPartLabel(bodyPart) }}
                 </option>
               </select></label>
             </div><div class="selection-list">
@@ -181,7 +242,7 @@ useSeoMeta({ title: 'Treinos' })
                 :disabled="selectedExercises.some(item => item.id === exercise.id)"
                 @click="addExercise(exercise)"
               >
-                <span><b>{{ exercise.name }}</b><small>{{ exercise.body_part || 'Exercicio' }}</small></span><UIcon name="i-lucide-plus" />
+                <span><b>{{ exercise.name }}</b><small>{{ bodyPartLabel(exercise.body_part) || 'Exercício' }}</small></span><UIcon name="i-lucide-plus" />
               </button><p v-if="!catalog.length">
                 Carregando exercicios...
               </p><p v-else-if="!filteredCatalog.length">
@@ -204,7 +265,26 @@ useSeoMeta({ title: 'Treinos' })
                   >
                     <UIcon name="i-lucide-trash-2" />
                   </button>
-                </div><div class="exercise-fields">
+                </div><div
+                  v-if="isCardioExercise(exercise)"
+                  class="exercise-fields exercise-fields-cardio"
+                >
+                  <label>Duracao (min)<input
+                    v-model.number="exercise.duration_minutes"
+                    type="number"
+                    min="1"
+                    max="600"
+                  ></label><label>Descanso (s)<input
+                    v-model.number="exercise.rest_seconds"
+                    type="number"
+                    min="0"
+                    max="600"
+                    step="5"
+                  ></label>
+                </div><div
+                  v-else
+                  class="exercise-fields"
+                >
                   <label>Series<input
                     v-model.number="exercise.series"
                     type="number"
@@ -220,6 +300,12 @@ useSeoMeta({ title: 'Treinos' })
                     type="number"
                     min="0"
                     step="0.5"
+                  ></label><label>Descanso (s)<input
+                    v-model.number="exercise.rest_seconds"
+                    type="number"
+                    min="0"
+                    max="600"
+                    step="5"
                   ></label>
                 </div>
               </article>

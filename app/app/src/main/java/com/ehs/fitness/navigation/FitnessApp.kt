@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -50,10 +51,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.ehs.fitness.core.session.AuthUser
 import com.ehs.fitness.core.ui.components.InitialAvatar
 import com.ehs.fitness.core.ui.components.ThemeToggleButton
@@ -64,6 +67,7 @@ import com.ehs.fitness.feature.auth.SessionViewModel
 import com.ehs.fitness.feature.diet.DietScreen
 import com.ehs.fitness.feature.home.HomeScreen
 import com.ehs.fitness.feature.profile.ProfileScreen
+import com.ehs.fitness.feature.workouts.TrainingScreen
 import com.ehs.fitness.feature.workouts.WeekPlanScreen
 import com.ehs.fitness.feature.workouts.WorkoutsScreen
 import com.ehs.fitness.ui.appViewModel
@@ -122,6 +126,7 @@ private fun MainScaffold(user: AuthUser, onLogout: () -> Unit) {
         Routes.WEEK -> "Agenda semanal"
         Routes.DIET -> "Alimentação"
         Routes.PROFILE -> "Perfil"
+        Routes.TRAINING -> "Execução"
         else -> "Início"
     }
 
@@ -145,8 +150,14 @@ private fun MainScaffold(user: AuthUser, onLogout: () -> Unit) {
                 TopAppBar(
                     title = { Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) },
                     navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Abrir menu")
+                        if (route == Routes.TRAINING) {
+                            IconButton(onClick = { navController.navigateUp() }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                            }
+                        } else {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Filled.Menu, contentDescription = "Abrir menu")
+                            }
                         }
                     },
                     actions = {
@@ -205,7 +216,22 @@ private fun MainScaffold(user: AuthUser, onLogout: () -> Unit) {
                         )
                     }
                     composable(Routes.WORKOUTS) {
-                        WorkoutsScreen()
+                        WorkoutsScreen(
+                            onStartWorkout = { workoutId ->
+                                navController.navigate(Routes.training(workoutId))
+                            },
+                        )
+                    }
+                    composable(
+                        route = Routes.TRAINING,
+                        arguments = listOf(
+                            navArgument(Routes.TRAINING_WORKOUT_ARG) { type = NavType.IntType },
+                        ),
+                    ) { entry ->
+                        TrainingScreen(
+                            workoutId = entry.arguments?.getInt(Routes.TRAINING_WORKOUT_ARG) ?: 0,
+                            onClose = { navController.popBackStack() },
+                        )
                     }
                     composable(Routes.WEEK) {
                         WeekPlanScreen()

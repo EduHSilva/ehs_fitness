@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +35,7 @@ import com.ehs.fitness.core.ui.components.EmptyNote
 import com.ehs.fitness.core.ui.components.IntroBanner
 import com.ehs.fitness.core.ui.components.LoadingScreen
 import com.ehs.fitness.core.ui.components.PageState
+import com.ehs.fitness.core.ui.components.RefreshableLazyColumn
 import com.ehs.fitness.core.ui.theme.FitnessTheme
 import com.ehs.fitness.domain.workouts.WeekPlan
 import com.ehs.fitness.ui.appViewModel
@@ -46,7 +46,9 @@ fun WeekPlanScreen() {
     val state by vm.state.collectAsStateWithLifecycle()
     val plannedCount = state.days.count { it.workoutId != null }
 
-    LazyColumn(
+    RefreshableLazyColumn(
+        isRefreshing = state.refreshing,
+        onRefresh = { vm.load(silent = true) },
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

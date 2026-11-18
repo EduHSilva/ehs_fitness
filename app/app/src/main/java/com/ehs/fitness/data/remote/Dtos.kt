@@ -60,6 +60,7 @@ data class ExerciseDto(
     val series: Int? = null,
     val repetitions: Int? = null,
     @SerialName("rest_seconds") val restSeconds: Int? = null,
+    @SerialName("duration_seconds") val durationSeconds: Int? = null,
     val notes: String? = null,
 )
 
@@ -76,6 +77,31 @@ data class WorkoutWeekDayDto(
     val dayOfWeek: Int = 0,
     val workoutId: Int? = null,
     val name: String? = null,
+)
+
+// ---------------------------------------------------------------------------
+// Acompanhamento diário (serviço fitness)
+// ---------------------------------------------------------------------------
+
+@Serializable
+data class UserConfigDto(
+    val id: Int? = null,
+    val showCreatine: Boolean = true,
+    val dailyCardio: Double = 0.0,
+)
+
+@Serializable
+data class HistoryDto(
+    val id: Int? = null,
+    val eventDate: String? = null,
+    val creatine: Boolean = false,
+    val cardio: Double = 0.0,
+)
+
+@Serializable
+data class UpdateHistoryRequest(
+    val creatine: Boolean? = null,
+    val cardio: Double? = null,
 )
 
 // ---------------------------------------------------------------------------

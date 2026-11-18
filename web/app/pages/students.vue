@@ -324,6 +324,12 @@ useSeoMeta({ title: 'Alunos' })
                 <UIcon name="i-lucide-target" /> Objetivo
               </button>
               <button
+                title="Definir acompanhamento diário"
+                @click="manage(student, 'tracking')"
+              >
+                <UIcon name="i-lucide-heart-pulse" /> Acompanhamento
+              </button>
+              <button
                 class="danger-action"
                 :disabled="busyLinkId !== null"
                 @click="requestEnd(student)"

@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 
 data class WeekPlanUiState(
     val loading: Boolean = true,
+    val refreshing: Boolean = false,
     val error: String? = null,
     val days: List<WeekDay> = emptyList(),
 )
@@ -31,13 +32,20 @@ class WeekPlanViewModel(
     fun load(silent: Boolean = false) {
         viewModelScope.launch {
             if (!silent) _state.update { it.copy(loading = true, error = null) }
+            else _state.update { it.copy(refreshing = true) }
             try {
-                _state.update { it.copy(loading = false, error = null, days = repository.week()) }
+                _state.update {
+                    it.copy(loading = false, refreshing = false, error = null, days = repository.week())
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 _state.update {
-                    it.copy(loading = false, error = e.userMessage("Não foi possível carregar a agenda."))
+                    it.copy(
+                        loading = false,
+                        refreshing = false,
+                        error = e.userMessage("Não foi possível carregar a agenda."),
+                    )
                 }
             }
         }
