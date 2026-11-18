@@ -192,16 +192,15 @@ private fun WorkoutCard(
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
                     workout.exercises.forEachIndexed { index, exercise ->
                         if (index > 0) HorizontalDivider(color = FitnessTheme.colors.border.copy(alpha = 0.6f))
-                        Row(
+                        Column(
                             Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 10.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
                             Text(
                                 exercise.name,
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f),
                             )
                             Text(
                                 WorkoutFormat.exerciseDetail(exercise),

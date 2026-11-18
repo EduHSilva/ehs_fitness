@@ -10,6 +10,7 @@ export function useTracking(studentId: Ref<string>, canManage: Ref<boolean>) {
   const actionError = ref('')
   const feedback = ref('')
   const showCreatine = ref(true)
+  const showWorkout = ref(false)
   const dailyCardio = ref(0)
 
   const readOnly = computed(() => !canManage.value)
@@ -23,6 +24,7 @@ export function useTracking(studentId: Ref<string>, canManage: Ref<boolean>) {
 
   function apply(config: TrackingConfig) {
     showCreatine.value = config.showCreatine
+    showWorkout.value = config.showWorkout
     dailyCardio.value = config.dailyCardio || 0
   }
 
@@ -51,7 +53,8 @@ export function useTracking(studentId: Ref<string>, canManage: Ref<boolean>) {
     try {
       const config = (await saveTrackingConfig(request, {
         showCreatine: showCreatine.value,
-        dailyCardio: dailyCardio.value
+        dailyCardio: dailyCardio.value,
+        showWorkout: showWorkout.value
       }, studentId.value || undefined)).data
       if (config) apply(config)
       feedback.value = 'Acompanhamento atualizado.'
@@ -69,6 +72,7 @@ export function useTracking(studentId: Ref<string>, canManage: Ref<boolean>) {
     actionError,
     feedback,
     showCreatine,
+    showWorkout,
     dailyCardio,
     readOnly,
     cardioEnabled,

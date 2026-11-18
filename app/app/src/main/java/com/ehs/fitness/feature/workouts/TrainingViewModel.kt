@@ -14,12 +14,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 data class TrainingUiState(
     val loading: Boolean = true,
     val error: String? = null,
     val session: TrainingSession? = null,
     val remainingSeconds: Int = 0,
+    val loadSaving: Boolean = false,
+    val loadError: String? = null,
 )
 
 class TrainingViewModel(
@@ -85,6 +89,35 @@ class TrainingViewModel(
         publish(next)
     }
 
+    /** Ajusta a carga localmente e tenta gravar no plano quando há conexão. */
+    fun updateLoad(load: Double) {
+        val session = _state.value.session ?: return
+        val exercise = session.currentExercise ?: return
+        if (_state.value.loadSaving) return
+        val safe = load.coerceIn(0.0, 1000.0)
+        val updated = session.updateLoad(safe, System.currentTimeMillis())
+        sessions.save(updated)
+        _state.update { it.copy(loadSaving = true, loadError = null) }
+        publish(updated)
+        viewModelScope.launch {
+            try {
+                workouts.updateLoad(session.workoutId, exercise.exerciseId, safe)
+                _state.update { it.copy(loadSaving = false) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(loadSaving = false, loadError = loadSyncMessage(e)) }
+            }
+        }
+    }
+
+    private fun loadSyncMessage(cause: Exception): String = when {
+        cause is HttpException && cause.code() == 403 ->
+            "Seu profissional gerencia o treino; a carga vale apenas nesta execução."
+        cause is IOException -> "Sem conexão; a carga vale apenas nesta execução."
+        else -> "Não foi possível atualizar o plano; a carga vale apenas nesta execução."
+    }
+
     fun restart() {
         val session = _state.value.session ?: return
         val now = System.currentTimeMillis()
@@ -109,11 +142,16 @@ class TrainingViewModel(
     private fun publish(session: TrainingSession) {
         ticker?.cancel()
         val remaining = session.restRemainingSeconds(System.currentTimeMillis())
-        _state.value = TrainingUiState(
-            loading = false,
-            session = session,
-            remainingSeconds = remaining,
-        )
+        _state.update {
+            val changedExercise =
+                it.session?.currentExercise?.exerciseId != session.currentExercise?.exerciseId
+            it.copy(
+                loading = false,
+                session = session,
+                remainingSeconds = remaining,
+                loadError = if (changedExercise) null else it.loadError,
+            )
+        }
         if (remaining > 0) startTicker()
     }
 

@@ -71,11 +71,13 @@ object Mappers {
 
     fun config(dto: UserConfigDto) = TrackingConfig(
         showCreatine = dto.showCreatine,
+        showWorkout = dto.showWorkout,
         dailyCardio = dto.dailyCardio.coerceAtLeast(0.0),
     )
 
     fun dailyTracking(dto: HistoryDto) = DailyTracking(
         creatine = dto.creatine,
+        trained = dto.trained,
         cardio = dto.cardio.coerceAtLeast(0.0),
     )
 }

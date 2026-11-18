@@ -1,6 +1,6 @@
 import { errorMessage } from '~/types/api'
 import { bodyPartLabel } from './bodyParts'
-import { createExercise, createWorkout, deleteWorkout, fetchExerciseCatalog, fetchWorkouts, updateWorkout } from './workout.api'
+import { createExercise, createWorkout, deleteWorkout, fetchExerciseCatalog, fetchWorkouts, updateExercise, updateWorkout } from './workout.api'
 import type { Exercise, Workout, WorkoutExercise, WorkoutFormExercise } from './types'
 
 function isCardioExercise(exercise: Pick<Exercise, 'body_part'>) {
@@ -56,9 +56,10 @@ export function useWorkouts(studentId: Ref<string>, canManage: Ref<boolean>) {
   const pendingDelete = ref<Workout | null>(null)
   const deleting = ref(false)
   const showExerciseForm = ref(false)
+  const editingExerciseId = ref<number | null>(null)
   const exerciseName = ref('')
   const exerciseBodyPart = ref('')
-  const creatingExercise = ref(false)
+  const savingExercise = ref(false)
   const exerciseFormError = ref('')
 
   const readOnly = computed(() => !canManage.value)
@@ -102,39 +103,81 @@ export function useWorkouts(studentId: Ref<string>, canManage: Ref<boolean>) {
     await ensureCatalog()
   }
 
-  function openExerciseForm() {
+  function openExerciseForm(exercise?: Exercise) {
     if (readOnly.value) return
+    if (exercise && !exercise.custom) return
     showExerciseForm.value = true
+    editingExerciseId.value = exercise?.id ?? null
+    exerciseName.value = exercise?.name ?? ''
+    exerciseBodyPart.value = exercise?.body_part ?? ''
     exerciseFormError.value = ''
   }
 
   function cancelExerciseForm() {
     showExerciseForm.value = false
+    editingExerciseId.value = null
     exerciseName.value = ''
     exerciseBodyPart.value = ''
     exerciseFormError.value = ''
   }
 
-  async function createCustomExercise() {
+  async function saveCustomExercise() {
     if (readOnly.value) return
     exerciseFormError.value = ''
     const name = exerciseName.value.trim()
     if (!name) return void (exerciseFormError.value = 'Informe o nome do exercício.')
     if (!exerciseBodyPart.value) return void (exerciseFormError.value = 'Selecione a parte do corpo.')
-    creatingExercise.value = true
+    savingExercise.value = true
     try {
-      const created = (await createExercise(request, { name, bodyPart: exerciseBodyPart.value })).data
-      if (!created) throw new Error('Exercício não retornado pela API.')
-      catalog.value = [...catalog.value, created].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+      const input = { name, bodyPart: exerciseBodyPart.value }
+      const saved = editingExerciseId.value
+        ? (await updateExercise(request, editingExerciseId.value, input)).data
+        : (await createExercise(request, input)).data
+      if (!saved) throw new Error('Exercício não retornado pela API.')
+      if (editingExerciseId.value) applyExerciseUpdate(saved)
+      else {
+        catalog.value = [...catalog.value, saved].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+        addExercise(saved)
+      }
       selectedBodyPart.value = ''
       exerciseSearch.value = ''
-      addExercise(created)
       cancelExerciseForm()
     } catch (cause) {
-      exerciseFormError.value = errorMessage(cause, 'Não foi possível criar o exercício.')
+      exerciseFormError.value = errorMessage(cause, editingExerciseId.value
+        ? 'Não foi possível salvar o exercício.'
+        : 'Não foi possível criar o exercício.')
     } finally {
-      creatingExercise.value = false
+      savingExercise.value = false
     }
+  }
+
+  function applyExerciseUpdate(exercise: Exercise) {
+    catalog.value = catalog.value
+      .map(item => item.id === exercise.id ? { ...item, ...exercise } : item)
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    selectedExercises.value = selectedExercises.value.map((item) => {
+      if (item.id !== exercise.id) return item
+      const base = { ...item, name: exercise.name, body_part: exercise.body_part }
+      if (isCardioExercise(exercise)) {
+        return {
+          ...base,
+          series: 1,
+          repetitions: 0,
+          load: undefined,
+          duration_minutes: item.duration_minutes ?? 10
+        }
+      }
+      if (isCardioExercise(item)) {
+        return {
+          ...base,
+          series: 3,
+          repetitions: 12,
+          load: undefined,
+          duration_minutes: undefined
+        }
+      }
+      return base
+    })
   }
 
   function addExercise(exercise: Exercise) {
@@ -143,6 +186,17 @@ export function useWorkouts(studentId: Ref<string>, canManage: Ref<boolean>) {
 
   function removeExercise(id: number) {
     selectedExercises.value = selectedExercises.value.filter(item => item.id !== id)
+  }
+
+  function moveExercise(index: number, offset: number) {
+    const target = index + offset
+    if (index < 0 || target < 0 || target >= selectedExercises.value.length) return
+    const next = [...selectedExercises.value]
+    const moved = next[index]
+    if (!moved) return
+    next.splice(index, 1)
+    next.splice(target, 0, moved)
+    selectedExercises.value = next
   }
 
   function cancelForm() {
@@ -233,9 +287,10 @@ export function useWorkouts(studentId: Ref<string>, canManage: Ref<boolean>) {
     pendingDelete,
     deleting,
     showExerciseForm,
+    editingExerciseId,
     exerciseName,
     exerciseBodyPart,
-    creatingExercise,
+    savingExercise,
     exerciseFormError,
     readOnly,
     bodyParts,
@@ -244,9 +299,10 @@ export function useWorkouts(studentId: Ref<string>, canManage: Ref<boolean>) {
     openForm,
     openExerciseForm,
     cancelExerciseForm,
-    createCustomExercise,
+    saveCustomExercise,
     addExercise,
     removeExercise,
+    moveExercise,
     cancelForm,
     save,
     requestDelete,

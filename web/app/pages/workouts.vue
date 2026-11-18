@@ -23,9 +23,10 @@ const {
   pendingDelete,
   deleting,
   showExerciseForm,
+  editingExerciseId,
   exerciseName,
   exerciseBodyPart,
-  creatingExercise,
+  savingExercise,
   exerciseFormError,
   readOnly,
   bodyParts,
@@ -34,9 +35,10 @@ const {
   openForm,
   openExerciseForm,
   cancelExerciseForm,
-  createCustomExercise,
+  saveCustomExercise,
   addExercise,
   removeExercise,
+  moveExercise,
   cancelForm,
   save: saveWorkout,
   requestDelete,
@@ -169,7 +171,7 @@ useSeoMeta({ title: 'Treinos' })
                   v-if="!readOnly && !showExerciseForm"
                   type="button"
                   class="icon-text-button"
-                  @click="openExerciseForm"
+                  @click="openExerciseForm()"
                 >
                   <UIcon name="i-lucide-plus" /> Criar exercício
                 </button>
@@ -177,9 +179,11 @@ useSeoMeta({ title: 'Treinos' })
             </div><form
               v-if="showExerciseForm && !readOnly"
               class="custom-exercise-form"
-              @submit.prevent="createCustomExercise"
+              @submit.prevent="saveCustomExercise"
             >
-              <label>Nome do exercício<input
+              <p class="custom-exercise-form-title">
+                {{ editingExerciseId ? 'Editando exercício personalizado' : 'Novo exercício personalizado' }}
+              </p><label>Nome do exercício<input
                 v-model="exerciseName"
                 maxlength="80"
                 placeholder="Ex.: Tríceps testa"
@@ -211,9 +215,9 @@ useSeoMeta({ title: 'Treinos' })
                 </button><button
                   type="submit"
                   class="primary-button"
-                  :disabled="creatingExercise"
+                  :disabled="savingExercise"
                 >
-                  {{ creatingExercise ? 'Criando...' : 'Criar exercício' }}
+                  {{ savingExercise ? 'Salvando...' : (editingExerciseId ? 'Salvar exercício' : 'Criar exercício') }}
                 </button>
               </div>
             </form><div class="exercise-filters">
@@ -235,15 +239,28 @@ useSeoMeta({ title: 'Treinos' })
                 </option>
               </select></label>
             </div><div class="selection-list">
-              <button
+              <div
                 v-for="exercise in filteredCatalog"
                 :key="exercise.id"
-                type="button"
-                :disabled="selectedExercises.some(item => item.id === exercise.id)"
-                @click="addExercise(exercise)"
+                class="selection-item"
               >
-                <span><b>{{ exercise.name }}</b><small>{{ bodyPartLabel(exercise.body_part) || 'Exercício' }}</small></span><UIcon name="i-lucide-plus" />
-              </button><p v-if="!catalog.length">
+                <button
+                  type="button"
+                  class="selection-add"
+                  :disabled="selectedExercises.some(item => item.id === exercise.id)"
+                  @click="addExercise(exercise)"
+                >
+                  <span><b>{{ exercise.name }}</b><small>{{ bodyPartLabel(exercise.body_part) || 'Exercício' }}</small></span><UIcon name="i-lucide-plus" />
+                </button><button
+                  v-if="exercise.custom && !readOnly"
+                  type="button"
+                  class="selection-edit"
+                  aria-label="Editar exercício"
+                  @click="openExerciseForm(exercise)"
+                >
+                  <UIcon name="i-lucide-pencil" />
+                </button>
+              </div><p v-if="!catalog.length">
                 Carregando exercicios...
               </p><p v-else-if="!filteredCatalog.length">
                 Nenhum exercicio encontrado para os filtros selecionados.
@@ -254,17 +271,36 @@ useSeoMeta({ title: 'Treinos' })
               <p v-if="!selectedExercises.length">
                 Selecione os exercicios ao lado.
               </p><article
-                v-for="exercise in selectedExercises"
+                v-for="(exercise, index) in selectedExercises"
                 :key="exercise.id"
               >
-                <div>
-                  <b>{{ exercise.name }}</b><button
-                    type="button"
-                    aria-label="Remover exercicio"
-                    @click="removeExercise(exercise.id)"
-                  >
-                    <UIcon name="i-lucide-trash-2" />
-                  </button>
+                <div class="selected-exercise-head">
+                  <b>{{ exercise.name }}</b><div class="selected-exercise-actions">
+                    <button
+                      type="button"
+                      class="move-exercise"
+                      aria-label="Mover exercício para cima"
+                      :disabled="index === 0"
+                      @click="moveExercise(index, -1)"
+                    >
+                      <UIcon name="i-lucide-arrow-up" />
+                    </button><button
+                      type="button"
+                      class="move-exercise"
+                      aria-label="Mover exercício para baixo"
+                      :disabled="index === selectedExercises.length - 1"
+                      @click="moveExercise(index, 1)"
+                    >
+                      <UIcon name="i-lucide-arrow-down" />
+                    </button><button
+                      type="button"
+                      class="remove-exercise"
+                      aria-label="Remover exercicio"
+                      @click="removeExercise(exercise.id)"
+                    >
+                      <UIcon name="i-lucide-trash-2" />
+                    </button>
+                  </div>
                 </div><div
                   v-if="isCardioExercise(exercise)"
                   class="exercise-fields exercise-fields-cardio"

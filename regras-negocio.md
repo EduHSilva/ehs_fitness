@@ -80,9 +80,9 @@
 - Configurações e acompanhamento diário são privados do aluno; o profissional não
   acessa.
 - O catálogo base de exercícios é curado e global; o catálogo de alimentos é global.
-- Cada usuário pode criar exercícios na própria biblioteca, visíveis apenas para ele
-  (`POST /fitness/workout/exercises`). O profissional usa a própria biblioteca ao montar
-  planos dos alunos; a base curada não é editável pelos clientes.
+- Cada usuário pode criar e editar exercícios na própria biblioteca, visíveis apenas
+  para ele (`POST`/`PUT /fitness/workout/exercises`). O profissional usa a própria
+  biblioteca ao montar planos dos alunos; a base curada não é editável pelos clientes.
 - Listagens vazias devem devolver `[]`, nunca `null`.
 
 ## Treinos
@@ -96,6 +96,8 @@
   cliente derivar a semana do `dayOfWeek`.
 - Exercício: referência ao catálogo, séries, repetições, carga, descanso e observações.
   Carga, descanso e observações são opcionais e vão como `null` quando vazios.
+- A ordem dos exercícios no treino é definida no cadastro (`position`) e preservada na
+  leitura; o app executa os exercícios nessa ordem.
 - O descanso entre séries é definido por exercício, em segundos (`rest_seconds`), no
   cadastro do treino no web; o app usa esse valor no cronômetro de execução.
 - Cardio é prescrito por tempo em `duration_seconds` (0 = exercício de séries e
@@ -103,6 +105,10 @@
   repetições; a execução no app mostra uma etapa única por tempo em vez de séries.
 - Não há status/ciclo de vida do treino. Padrão da interface: 3 séries × 12 repetições.
 - Só o aluno autorizado ou o profissional do domínio edita/exclui.
+- Durante a execução no app, a carga do exercício atual pode ser ajustada e gravada no
+  plano (`PUT /fitness/workout/load`, `workout_id` + `exercise_id` + `load`) quando houver
+  conexão. A regra de escrita do plano vale: aluno com profissional ativo recebe `403` e o
+  ajuste fica só na execução local.
 
 ## Dieta
 
@@ -117,12 +123,14 @@
 
 ## Acompanhamento diário
 
-- Registro diário com creatina (sim/não) e cardio (minutos), um por dia por aluno
-  (upsert). A consulta devolve apenas **hoje** (404 se não houver registro).
-- Configurações do aluno: `showCreatine` e `dailyCardio` (minutos; 0 desativa) controlam
-  o que aparece no app. Qualquer profissional com vínculo ativo (personal **ou**
-  nutricionista) lê e ajusta a configuração do aluno via `student_id`; o registro
-  diário (`/config/history`) continua privado do aluno.
+- Registro diário com creatina (sim/não), treino (sim/não) e cardio (minutos), um por dia
+  por aluno (upsert). A consulta devolve apenas **hoje** (404 se não houver registro).
+- O treino diário registra apenas que o aluno treinou naquele dia; quando existir o
+  registro real da execução, esse campo pode ser derivado dela.
+- Configurações do aluno: `showCreatine`, `showWorkout` e `dailyCardio` (minutos; 0
+  desativa) controlam o que aparece no app. Qualquer profissional com vínculo ativo
+  (personal **ou** nutricionista) lê e ajusta a configuração do aluno via `student_id`;
+  o registro diário (`/config/history`) continua privado do aluno.
 - A primeira consulta sem configuração cria o default e devolve 200; nunca 500.
 - O web expõe `/tracking` (Acompanhamento) para definir as opções do próprio usuário ou
   de um aluno vinculado; o app mostra o cartão de acompanhamento no início somente
@@ -139,10 +147,12 @@
   cronômetro de descanso ao concluir a série. Cardio aparece como uma etapa única por
   tempo (`duration_seconds`). O progresso é local (SharedPreferences), não vai para a
   API e é retomado depois de sair da tela ou encerrar o app; "Encerrar treino" descarta
-  a execução.
+  a execução. A exceção é a carga do exercício atual, que o aluno pode ajustar na
+  execução e que é gravada no plano quando online (ver Treinos).
 - O início exibe o cartão de acompanhamento diário quando a configuração definida no web
-  ativa creatina e/ou cardio: o aluno marca a creatina e registra os minutos de cardio
-  do dia (upsert em `/fitness/config/history`); o histórico é privado do aluno.
+  ativa creatina, treino e/ou cardio: o aluno marca a creatina e o treino do dia e
+  registra os minutos de cardio (upsert em `/fitness/config/history`); o histórico é
+  privado do aluno.
 - Profissionais usam o web para gestão. Se entrarem no app, veem apenas os próprios
   dados, sem superfície de gestão.
 - Convites, aceite/recusa e encerramento de vínculo são feitos no web; o app não gerencia
@@ -178,11 +188,16 @@ Rotas expostas pelo gateway em `/fitness/**` (Swagger em `/fitness/swagger/index
   profissional ativo no domínio; `403` para papel/vínculo inválido e `404` para aluno
   inexistente/não vinculado.
 - `duration_seconds` no exercício do treino (cardio por tempo; 0 = séries/repetições).
+- `PUT /fitness/workout/load` — body `{workout_id, exercise_id, load, student_id?}`;
+  grava a carga de um exercício do treino (0 = sem carga) respeitando a mesma regra de
+  escrita do plano (`400` carga/ids inválidos, `404` treino ou exercício inexistente,
+  `403` aluno com profissional ativo).
 - `GET/PUT /fitness/workouts/week` devolvem os 7 dias (`workoutId` nulo = descanso);
   listas vazias voltam como `[]`; refeição expõe `food_id` e `food_name` (o legado
   `tag_id` carrega o mesmo id); ids inexistentes respondem `404`; `GET /fitness/config/user`
   cria o default no primeiro acesso e aceita `student_id` para qualquer profissional com
-  vínculo ativo.
+  vínculo ativo; `/fitness/config/history` carrega `creatine`, `trained` e `cardio`
+  (404 sem registro no dia).
 
 ## Pendências de implementação
 

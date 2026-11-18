@@ -25,6 +25,7 @@ class TrackingRepository(private val api: TrackingApi) {
                 UpdateHistoryRequest(
                     creatine = tracking.creatine,
                     cardio = tracking.cardio,
+                    trained = tracking.trained,
                 ),
             ).unwrap(),
         )

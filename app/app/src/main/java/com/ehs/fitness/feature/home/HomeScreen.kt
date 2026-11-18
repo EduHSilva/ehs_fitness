@@ -151,6 +151,7 @@ fun HomeScreen(
                         saving = state.trackingSaving,
                         error = state.trackingError,
                         onCreatine = vm::setCreatine,
+                        onTrained = vm::setTrained,
                         onCardio = vm::setCardio,
                     )
                 }
@@ -430,6 +431,7 @@ private fun DailyTrackingCard(
     saving: Boolean,
     error: String?,
     onCreatine: (Boolean) -> Unit,
+    onTrained: (Boolean) -> Unit,
     onCardio: (Double) -> Unit,
 ) {
     ContentCard {
@@ -438,7 +440,7 @@ private fun DailyTrackingCard(
             style = MaterialTheme.typography.labelSmall,
             color = FitnessTheme.colors.subtle,
         )
-        Text("Creatina e cardio", style = MaterialTheme.typography.titleMedium)
+        Text(trackingTitle(config), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(4.dp))
         Text(
             "Solicitado pelo seu profissional no web.",
@@ -448,31 +450,29 @@ private fun DailyTrackingCard(
 
         if (config.showCreatine) {
             Spacer(Modifier.height(12.dp))
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Creatina", style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        if (today.creatine) "Registrada hoje" else "Ainda não registrada",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (today.creatine) FitnessTheme.colors.success else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(
-                    checked = today.creatine,
-                    onCheckedChange = onCreatine,
-                    enabled = !saving,
-                )
-            }
+            TrackingSwitchRow(
+                title = "Creatina",
+                status = if (today.creatine) "Registrada hoje" else "Ainda não registrada",
+                checked = today.creatine,
+                enabled = !saving,
+                onCheckedChange = onCreatine,
+            )
+        }
+
+        if (config.showWorkout) {
+            if (config.showCreatine) TrackingSectionDivider() else Spacer(Modifier.height(12.dp))
+            TrackingSwitchRow(
+                title = "Treino",
+                status = if (today.trained) "Registrado hoje" else "Ainda não registrado",
+                checked = today.trained,
+                enabled = !saving,
+                onCheckedChange = onTrained,
+            )
         }
 
         if (config.cardioEnabled) {
-            if (config.showCreatine) {
-                Spacer(Modifier.height(10.dp))
-                ScreenDivider()
-                Spacer(Modifier.height(12.dp))
+            if (config.showCreatine || config.showWorkout) {
+                TrackingSectionDivider()
             } else {
                 Spacer(Modifier.height(12.dp))
             }
@@ -505,6 +505,54 @@ private fun DailyTrackingCard(
             Spacer(Modifier.height(10.dp))
             ErrorBanner(error)
         }
+    }
+}
+
+@Composable
+private fun TrackingSwitchRow(
+    title: String,
+    status: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(
+                status,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (checked) FitnessTheme.colors.success else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+        )
+    }
+}
+
+@Composable
+private fun TrackingSectionDivider() {
+    Spacer(Modifier.height(10.dp))
+    ScreenDivider()
+    Spacer(Modifier.height(12.dp))
+}
+
+private fun trackingTitle(config: TrackingConfig): String {
+    val labels = buildList {
+        if (config.showCreatine) add("Creatina")
+        if (config.showWorkout) add("Treino")
+        if (config.cardioEnabled) add("Cardio")
+    }
+    return when (labels.size) {
+        0, 1 -> labels.firstOrNull().orEmpty()
+        2 -> "${labels[0]} e ${labels[1]}"
+        else -> labels.dropLast(1).joinToString(", ") + " e " + labels.last()
     }
 }
 

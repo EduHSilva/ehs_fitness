@@ -42,19 +42,21 @@ data class Meal(
 )
 
 /**
- * Acompanhamento solicitado pelo profissional no web: creatina e meta diária de
- * cardio (em minutos; 0 desativa o registro).
+ * Acompanhamento solicitado pelo profissional no web: creatina, treino e meta
+ * diária de cardio (em minutos; 0 desativa o registro).
  */
 data class TrackingConfig(
     val showCreatine: Boolean = true,
+    val showWorkout: Boolean = false,
     val dailyCardio: Double = 0.0,
 ) {
     val cardioEnabled: Boolean get() = dailyCardio > 0.0
-    val enabled: Boolean get() = showCreatine || cardioEnabled
+    val enabled: Boolean get() = showCreatine || showWorkout || cardioEnabled
 }
 
 /** Registro do próprio dia. */
 data class DailyTracking(
     val creatine: Boolean = false,
+    val trained: Boolean = false,
     val cardio: Double = 0.0,
 )

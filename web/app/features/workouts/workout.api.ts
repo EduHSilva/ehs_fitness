@@ -27,6 +27,16 @@ export function createExercise(request: ApiRequest, input: { name: string, bodyP
   })
 }
 
+export function updateExercise(request: ApiRequest, id: number, input: { name: string, bodyPart: string }) {
+  return request<ApiResponse<Exercise>>(`/fitness/workout/exercises?id=${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: {
+      name: input.name,
+      body_part: input.bodyPart
+    }
+  })
+}
+
 export function createWorkout(request: ApiRequest, input: { name: string, exercises: WorkoutExercise[], studentId?: string }) {
   return request('/fitness/workout', {
     method: 'POST',

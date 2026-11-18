@@ -76,6 +76,18 @@ data class TrainingSession(
     fun skipRest(nowMillis: Long): TrainingSession =
         copy(restEndsAtMillis = null, updatedAtMillis = nowMillis)
 
+    /** Ajusta a carga do exercício atual; 0 remove a carga prescrita. */
+    fun updateLoad(load: Double, nowMillis: Long): TrainingSession {
+        val exercise = currentExercise ?: return this
+        val safe = load.takeIf { it > 0.0 }
+        return copy(
+            exercises = exercises.map {
+                if (it.exerciseId == exercise.exerciseId) it.copy(load = safe) else it
+            },
+            updatedAtMillis = nowMillis,
+        )
+    }
+
     /** Limpa um descanso que já terminou enquanto o app estava fechado. */
     fun settleRest(nowMillis: Long): TrainingSession =
         if (restEndsAtMillis != null && !isResting(nowMillis)) skipRest(nowMillis) else this
