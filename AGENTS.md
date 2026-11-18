@@ -98,7 +98,9 @@ O app contorna o que dá e o restante está registrado no TODO do backend:
   DTO, mas o handler o ignora.
 - `GET /fitness/workouts` e `GET /fitness/diet/meals` devolvem `data: []` quando vazios
   (os clientes também tratam `null` como lista vazia). A refeição traz
-  `food_id`/`food_name`; a edição remonta o formulário a partir desse `GET`.
+  `food_id`/`food_name` e os macros por 100 g (`calories`, `protein`, `carbs`, `fat`,
+  `fiber`); a edição remonta o formulário a partir desse `GET`. O catálogo de alimentos
+  global é a TACO (597 itens).
 - `GET /fitness/workout?id=` e `GET /fitness/diet/meal?id=` respondem 404 para id
   inexistente.
 - Existe vínculo aluno ↔ profissional com convites por e-mail (`/fitness/students`):
