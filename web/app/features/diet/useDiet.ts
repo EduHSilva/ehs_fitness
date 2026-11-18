@@ -1,6 +1,50 @@
 import { errorMessage } from '~/types/api'
 import { createMeal, deleteMeal, fetchMeals, searchFoods, updateMeal } from './diet.api'
-import type { Food, Meal, MealFood, MealFoodResponse } from './types'
+import type { Food, Macros, Meal, MealFood, MealFoodResponse } from './types'
+
+function hasMacros(food: Macros) {
+  return [food.calories, food.protein, food.carbs, food.fat]
+    .some(value => typeof value === 'number' && value > 0)
+}
+
+function scaledMacros(food: Macros, quantity: number): Required<Macros> {
+  const factor = quantity > 0 ? quantity / 100 : 0
+  return {
+    calories: (food.calories ?? 0) * factor,
+    protein: (food.protein ?? 0) * factor,
+    carbs: (food.carbs ?? 0) * factor,
+    fat: (food.fat ?? 0) * factor,
+    fiber: (food.fiber ?? 0) * factor
+  }
+}
+
+function decimalLabel(value: number) {
+  return (Math.round(value * 10) / 10).toLocaleString('pt-BR', { maximumFractionDigits: 1 })
+}
+
+function macrosLabel(macros: Required<Macros>) {
+  return `${Math.round(macros.calories)} kcal · P ${decimalLabel(macros.protein)} g · C ${decimalLabel(macros.carbs)} g · G ${decimalLabel(macros.fat)} g`
+}
+
+function foodMacros(food: Macros, quantity: number) {
+  return hasMacros(food) ? macrosLabel(scaledMacros(food, quantity)) : ''
+}
+
+function mealMacros(meal: Meal) {
+  const foods = (meal.foods ?? []).filter(hasMacros)
+  if (!foods.length) return ''
+  const total = foods.reduce<Required<Macros>>((sum, food) => {
+    const scaled = scaledMacros(food, Number(food.quantity) || 0)
+    return {
+      calories: sum.calories + scaled.calories,
+      protein: sum.protein + scaled.protein,
+      carbs: sum.carbs + scaled.carbs,
+      fat: sum.fat + scaled.fat,
+      fiber: sum.fiber + scaled.fiber
+    }
+  }, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 })
+  return macrosLabel(total)
+}
 
 export function useDiet(studentId: Ref<string>, canManage: Ref<boolean>) {
   const { request } = useFitnessApi()
@@ -58,7 +102,17 @@ export function useDiet(studentId: Ref<string>, canManage: Ref<boolean>) {
 
   function addFood(food: Food) {
     if (selectedFoods.value.some(item => item.food_id === food.id)) return
-    selectedFoods.value.push({ food_id: food.id, name: food.name, quantity: 100, observation: '' })
+    selectedFoods.value.push({
+      food_id: food.id,
+      name: food.name,
+      quantity: 100,
+      observation: '',
+      calories: food.calories,
+      protein: food.protein,
+      carbs: food.carbs,
+      fat: food.fat,
+      fiber: food.fiber
+    })
     foodQuery.value = ''
     foods.value = []
   }
@@ -101,7 +155,12 @@ export function useDiet(studentId: Ref<string>, canManage: Ref<boolean>) {
       food_id: foodId(food),
       name: foodName(food),
       quantity: Number(food.quantity) || 0,
-      observation: food.observation ?? ''
+      observation: food.observation ?? '',
+      calories: food.calories,
+      protein: food.protein,
+      carbs: food.carbs,
+      fat: food.fat,
+      fiber: food.fiber
     }))
     showForm.value = true
     formError.value = ''
@@ -185,6 +244,9 @@ export function useDiet(studentId: Ref<string>, canManage: Ref<boolean>) {
     requestDelete,
     cancelDelete,
     confirmDelete,
-    foodName
+    foodName,
+    foodMacros,
+    mealMacros,
+    hasMacros
   }
 }

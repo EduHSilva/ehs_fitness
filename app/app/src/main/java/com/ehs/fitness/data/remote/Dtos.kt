@@ -134,6 +134,11 @@ data class MealFoodDto(
     val quantity: Int? = null,
     val observation: String? = null,
     val obs: String? = null,
+    val calories: Double? = null,
+    val protein: Double? = null,
+    val carbs: Double? = null,
+    val fat: Double? = null,
+    val fiber: Double? = null,
 )
 
 @Serializable

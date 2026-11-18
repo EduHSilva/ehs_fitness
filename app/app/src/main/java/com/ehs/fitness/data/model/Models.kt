@@ -32,6 +32,11 @@ data class MealFood(
     val name: String,
     val quantity: Int = 100,
     val observation: String = "",
+    val calories: Double = 0.0,
+    val protein: Double = 0.0,
+    val carbs: Double = 0.0,
+    val fat: Double = 0.0,
+    val fiber: Double = 0.0,
 )
 
 data class Meal(

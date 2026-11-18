@@ -114,11 +114,12 @@
 
 - Refeição: nome (único por aluno), horário e pelo menos um alimento.
 - Alimento: referência ao catálogo (valores por 100 g), quantidade e observação. O campo
-  correto é `observation` (não `obs`).
-- A resposta de refeição expõe `food_id` e `food_name` para permitir exibir o alimento e
-  remontar o payload de edição.
-- O backend não calcula totais nem metas de macros. A busca de alimentos é por trecho do
-  nome (case-insensitive, limite 30) e a UI exige 2 caracteres.
+  correto é `observation` (não `obs`). O catálogo global é a TACO (597 itens).
+- A resposta de refeição expõe `food_id`, `food_name` e os macros por 100 g
+  (`calories`, `protein`, `carbs`, `fat`, `fiber`) para exibição; os clientes escalam
+  pelos gramas e podem somar o total da refeição.
+- O backend não calcula totais nem metas de macros. A busca de alimentos ignora acento
+  e caixa e combina as palavras do nome (limite 30); a UI exige 2 caracteres.
 - Só o aluno autorizado ou o nutricionista do domínio edita/exclui.
 
 ## Acompanhamento diário

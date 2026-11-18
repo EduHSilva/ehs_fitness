@@ -4,7 +4,7 @@ import { useStudentContext } from '~/features/students/useStudentContext'
 
 const { studentId, studentName, canManage, loadContext } = useStudentContext()
 const diet = useDiet(studentId, canManage)
-const { meals, foods, loading, saving, searching, error: errorMessage, actionError, formError, showForm, editingId, mealName, mealHour, foodQuery, selectedFoods, pendingDelete, deleting, readOnly, load: loadMeals, addFood, removeFood, cancelForm, startEdit, save: saveMeal, requestDelete, cancelDelete, confirmDelete } = diet
+const { meals, foods, loading, saving, searching, error: errorMessage, actionError, formError, showForm, editingId, mealName, mealHour, foodQuery, selectedFoods, pendingDelete, deleting, readOnly, load: loadMeals, addFood, removeFood, cancelForm, startEdit, save: saveMeal, requestDelete, cancelDelete, confirmDelete, foodMacros, mealMacros, hasMacros } = diet
 
 const deleteOpen = computed({
   get: () => Boolean(pendingDelete.value),
@@ -131,7 +131,10 @@ useSeoMeta({ title: 'Alimentação' })
             type="button"
             @click="addFood(food)"
           >
-            <span>{{ food.name }}</span><UIcon name="i-lucide-plus" />
+            <span>
+              <b>{{ food.name }}</b>
+              <small v-if="hasMacros(food)">{{ foodMacros(food, 100) }} (por 100 g)</small>
+            </span><UIcon name="i-lucide-plus" />
           </button><p v-if="!searching && !foods.length">
             Nenhum alimento encontrado.
           </p>
@@ -159,7 +162,12 @@ useSeoMeta({ title: 'Alimentação' })
                 v-model="food.observation"
                 placeholder="Ex.: cozido"
               ></label>
-            </div>
+            </div><p
+              v-if="hasMacros(food)"
+              class="nutrition-note"
+            >
+              {{ foodMacros(food, food.quantity) }}
+            </p>
           </article>
         </div><p
           v-if="formError"
@@ -249,9 +257,18 @@ useSeoMeta({ title: 'Alimentação' })
               v-for="(food, index) in meal.foods"
               :key="index"
             >
-              <span>{{ food.food_name || food.food?.name || food.name || 'Alimento' }}</span><small>{{ food.quantity ? `${food.quantity} g` : '' }} {{ food.observation || '' }}</small>
+              <span>{{ food.food_name || food.food?.name || food.name || 'Alimento' }}</span><small>{{ food.quantity ? `${food.quantity} g` : '' }} {{ food.observation || '' }}<span
+                v-if="hasMacros(food)"
+                class="meal-food-macros"
+              >{{ foodMacros(food, Number(food.quantity) || 0) }}</span></small>
             </li>
           </ul>
+          <p
+            v-if="mealMacros(meal)"
+            class="meal-totals"
+          >
+            Total: {{ mealMacros(meal) }}
+          </p>
         </article>
       </section>
     </main>
