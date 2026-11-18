@@ -56,6 +56,11 @@ object Mappers {
             name = name,
             quantity = dto.quantity ?: 0,
             observation = dto.observation ?: dto.obs.orEmpty(),
+            calories = dto.calories ?: 0.0,
+            protein = dto.protein ?: 0.0,
+            carbs = dto.carbs ?: 0.0,
+            fat = dto.fat ?: 0.0,
+            fiber = dto.fiber ?: 0.0,
         )
     }
 

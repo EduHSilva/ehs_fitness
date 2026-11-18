@@ -39,6 +39,7 @@ import com.ehs.fitness.core.ui.components.Tag
 import com.ehs.fitness.core.ui.theme.FitnessTheme
 import com.ehs.fitness.data.model.Meal
 import com.ehs.fitness.domain.diet.MealDraft
+import com.ehs.fitness.domain.diet.NutritionFormat
 import com.ehs.fitness.ui.appViewModel
 
 @Composable
@@ -139,6 +140,14 @@ private fun MealCard(meal: Meal) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    val totals = NutritionFormat.totals(meal)
+                    if (totals.isNotEmpty()) {
+                        Text(
+                            "Total: $totals",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = FitnessTheme.colors.subtle,
+                        )
+                    }
                 }
                 Tag(
                     text = meal.hour.ifBlank { "--:--" },
@@ -151,25 +160,38 @@ private fun MealCard(meal: Meal) {
                 Spacer(Modifier.height(10.dp))
                 HorizontalDivider(color = FitnessTheme.colors.border)
                 meal.foods.forEach { food ->
-                    Row(
+                    Column(
                         Modifier
                             .fillMaxWidth()
                             .padding(vertical = 9.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        Text(
-                            food.name.ifBlank { "Alimento" },
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(
-                            listOfNotNull(
-                                food.quantity.takeIf { it > 0 }?.let(MealDraft::formatQuantity),
-                                food.observation.takeIf { it.isNotBlank() },
-                            ).joinToString(" · "),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text(
+                                food.name.ifBlank { "Alimento" },
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                listOfNotNull(
+                                    food.quantity.takeIf { it > 0 }?.let(MealDraft::formatQuantity),
+                                    food.observation.takeIf { it.isNotBlank() },
+                                ).joinToString(" · "),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        val macros = NutritionFormat.macros(food)
+                        if (macros.isNotEmpty()) {
+                            Text(
+                                macros,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = FitnessTheme.colors.subtle,
+                            )
+                        }
                     }
                 }
             }
