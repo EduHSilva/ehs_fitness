@@ -2,6 +2,7 @@ package com.ehs.fitness.feature.workouts
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Replay
@@ -60,7 +62,12 @@ import com.ehs.fitness.ui.appViewModel
 @Composable
 fun TrainingScreen(workoutId: Int, onClose: () -> Unit) {
     val vm: TrainingViewModel = appViewModel {
-        TrainingViewModel(it.workoutRepository, it.trainingRepository)
+        TrainingViewModel(
+            it.workoutRepository,
+            it.trainingRepository,
+            it.trackingRepository,
+            it.restVibrator,
+        )
     }
     val state by vm.state.collectAsStateWithLifecycle()
     var confirmExit by remember { mutableStateOf(false) }
@@ -83,6 +90,9 @@ fun TrainingScreen(workoutId: Int, onClose: () -> Unit) {
         }
         state.session?.isFinished == true -> FinishedTraining(
             session = state.session!!,
+            trackingSaving = state.trackingSaving,
+            trackingSaved = state.trackingSaved,
+            trackingError = state.trackingError,
             onRestart = vm::restart,
             onDone = {
                 vm.finish()
@@ -97,6 +107,7 @@ fun TrainingScreen(workoutId: Int, onClose: () -> Unit) {
             onCompleteSeries = vm::completeSeries,
             onSkipRest = vm::skipRest,
             onUpdateLoad = vm::updateLoad,
+            onSelectExercise = vm::selectExercise,
             onRequestExit = { confirmExit = true },
         )
     }
@@ -133,10 +144,14 @@ private fun ActiveTraining(
     onCompleteSeries: () -> Unit,
     onSkipRest: () -> Unit,
     onUpdateLoad: (Double) -> Unit,
+    onSelectExercise: (Int) -> Unit,
     onRequestExit: () -> Unit,
 ) {
     val exercise = session.currentExercise ?: return
-    val nextExercise = session.exercises.getOrNull(session.exerciseIndex + 1)
+    val nextExercise = session.nextPendingExercise
+    val canSwap = session.exercises.indices.any {
+        it != session.exerciseIndex && !session.isExerciseDone(it)
+    }
     val progress = if (session.totalSeries == 0) 0f
     else session.completedSeriesOverall.toFloat() / session.totalSeries
     val lastSeries = session.currentSeries >= exercise.totalSeries
@@ -208,13 +223,21 @@ private fun ActiveTraining(
                     Text(session.workoutName, style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(8.dp))
                     HorizontalDivider(color = FitnessTheme.colors.border)
+                    if (canSwap) {
+                        Text(
+                            "Toque em um exercício para trocar o ativo.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = FitnessTheme.colors.subtle,
+                        )
+                    }
                     Spacer(Modifier.height(4.dp))
                     session.exercises.forEachIndexed { index, item ->
                         ExerciseRow(
                             order = index + 1,
                             exercise = item,
                             current = index == session.exerciseIndex,
-                            done = index < session.exerciseIndex,
+                            done = session.isExerciseDone(index),
+                            onSelect = { onSelectExercise(index) },
                         )
                     }
                 }
@@ -414,10 +437,17 @@ private fun loadInput(raw: String): String {
 }
 
 @Composable
-private fun ExerciseRow(order: Int, exercise: TrainingExercise, current: Boolean, done: Boolean) {
+private fun ExerciseRow(
+    order: Int,
+    exercise: TrainingExercise,
+    current: Boolean,
+    done: Boolean,
+    onSelect: () -> Unit,
+) {
     Row(
         Modifier
             .fillMaxWidth()
+            .clickable(enabled = !done && !current, onClick = onSelect)
             .padding(vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -472,7 +502,14 @@ private fun ExerciseRow(order: Int, exercise: TrainingExercise, current: Boolean
 }
 
 @Composable
-private fun FinishedTraining(session: TrainingSession, onRestart: () -> Unit, onDone: () -> Unit) {
+private fun FinishedTraining(
+    session: TrainingSession,
+    trackingSaving: Boolean,
+    trackingSaved: Boolean,
+    trackingError: String?,
+    onRestart: () -> Unit,
+    onDone: () -> Unit,
+) {
     val elapsedMinutes = ((System.currentTimeMillis() - session.startedAtMillis) / 60000).coerceAtLeast(0)
 
     Column(
@@ -513,6 +550,37 @@ private fun FinishedTraining(session: TrainingSession, onRestart: () -> Unit, on
             Metric(value = session.totalSeries.toString(), label = "séries")
             Metric(value = session.exercises.size.toString(), label = "exercícios")
             Metric(value = "${elapsedMinutes}min", label = "duração")
+        }
+        Spacer(Modifier.height(18.dp))
+        when {
+            trackingError != null -> Text(
+                trackingError,
+                style = MaterialTheme.typography.bodySmall,
+                color = FitnessTheme.colors.danger,
+                textAlign = TextAlign.Center,
+            )
+            trackingSaving -> Text(
+                "Registrando no acompanhamento de hoje...",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            trackingSaved -> Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(
+                    Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    tint = FitnessTheme.colors.success,
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(
+                    "Treino registrado no acompanhamento de hoje.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Spacer(Modifier.height(26.dp))
         Button(

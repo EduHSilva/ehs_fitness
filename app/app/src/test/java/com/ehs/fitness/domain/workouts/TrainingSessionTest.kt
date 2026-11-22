@@ -70,9 +70,70 @@ class TrainingSessionTest {
         val next = session.completeSeries(nowMillis = 1_000L)
 
         assertEquals(1, next.exerciseIndex)
-        assertEquals(0, next.completedSeries)
+        assertEquals(1, next.currentSeries)
         assertEquals("Rosca direta", next.currentExercise?.name)
         assertEquals(61_000L, next.restEndsAtMillis)
+    }
+
+    @Test
+    fun `trocar o exercicio ativo preserva o progresso de cada um`() {
+        val session = TrainingSession.start(workout, nowMillis = 0L)!!
+            .completeSeries(nowMillis = 0L)
+
+        val switched = session.selectExercise(1, nowMillis = 5_000L)
+
+        assertEquals(1, switched.exerciseIndex)
+        assertEquals("Rosca direta", switched.currentExercise?.name)
+        assertEquals(1, switched.currentSeries)
+        assertEquals(1, switched.completedSeriesOverall)
+        assertEquals(1, switched.completedSeriesFor(0))
+        assertEquals(5_000L, switched.updatedAtMillis)
+        assertEquals("Supino reto", switched.nextPendingExercise?.name)
+    }
+
+    @Test
+    fun `voltar ao exercicio anterior mantem a serie em andamento`() {
+        val session = TrainingSession.start(workout, nowMillis = 0L)!!
+            .completeSeries(nowMillis = 0L)
+            .selectExercise(1, nowMillis = 0L)
+            .selectExercise(0, nowMillis = 0L)
+
+        assertEquals(0, session.exerciseIndex)
+        assertEquals(2, session.currentSeries)
+        assertEquals(1, session.completedSeriesOverall)
+    }
+
+    @Test
+    fun `exercicio concluido ou indice invalido nao muda o ativo`() {
+        val session = TrainingSession.start(workout, nowMillis = 0L)!!
+            .selectExercise(1, nowMillis = 0L)
+            .completeSeries(nowMillis = 0L)
+
+        assertEquals(0, session.exerciseIndex)
+        assertTrue(session.isExerciseDone(1))
+        assertEquals(session, session.selectExercise(1, nowMillis = 1_000L))
+        assertEquals(session, session.selectExercise(9, nowMillis = 1_000L))
+        assertEquals(session, session.selectExercise(-1, nowMillis = 1_000L))
+    }
+
+    @Test
+    fun `treino so encerra quando todos os exercicios terminam`() {
+        val session = TrainingSession.start(workout, nowMillis = 0L)!!
+            .selectExercise(1, nowMillis = 0L)
+            .completeSeries(nowMillis = 0L)
+
+        assertFalse(session.isFinished)
+        assertEquals(0, session.exerciseIndex)
+        assertNull(session.restEndsAtMillis)
+
+        val midSupino = session.completeSeries(nowMillis = 0L)
+        assertFalse(midSupino.isFinished)
+        assertEquals(60_000L, midSupino.restEndsAtMillis)
+
+        val finished = midSupino.completeSeries(nowMillis = 0L)
+        assertTrue(finished.isFinished)
+        assertEquals(3, finished.completedSeriesOverall)
+        assertNull(finished.restEndsAtMillis)
     }
 
     @Test

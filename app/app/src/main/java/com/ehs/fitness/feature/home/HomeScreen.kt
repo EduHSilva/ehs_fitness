@@ -44,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ehs.fitness.core.session.AuthUser
 import com.ehs.fitness.core.ui.components.ContentCard
@@ -74,6 +76,8 @@ fun HomeScreen(
         HomeViewModel(it.workoutRepository, it.dietRepository, it.trackingRepository)
     }
     val state by vm.state.collectAsStateWithLifecycle()
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.refreshTracking() }
 
     val today = LocalDate.now().dayOfWeek.value
     val firstName = user.name.trim().substringBefore(' ').ifBlank { "atleta" }

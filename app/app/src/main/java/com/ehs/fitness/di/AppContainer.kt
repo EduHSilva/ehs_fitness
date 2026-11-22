@@ -2,6 +2,7 @@ package com.ehs.fitness.di
 
 import android.content.Context
 import com.ehs.fitness.BuildConfig
+import com.ehs.fitness.core.device.RestVibrator
 import com.ehs.fitness.core.network.ApiClient
 import com.ehs.fitness.core.prefs.AppPreferences
 import com.ehs.fitness.core.session.SessionManager
@@ -21,7 +22,8 @@ import kotlinx.serialization.json.Json
 
 /** Injeção manual (sem framework): a aplicação cria e expõe as dependências. */
 class AppContainer(context: Context) {
-    private val prefs = AppPreferences(context)
+    private val appContext = context.applicationContext
+    private val prefs = AppPreferences(appContext)
     private val json = Json { ignoreUnknownKeys = true }
 
     val settings = AppSettings(prefs)
@@ -39,6 +41,7 @@ class AppContainer(context: Context) {
     val studentRepository = StudentRepository(retrofit.create(StudentApi::class.java))
     val trackingRepository = TrackingRepository(retrofit.create(TrackingApi::class.java))
     val trainingRepository = TrainingSessionRepository(prefs, json)
+    val restVibrator = RestVibrator(appContext)
 
     val googleWebClientId: String = BuildConfig.GOOGLE_WEB_CLIENT_ID
     val googleLoginEnabled: Boolean get() = googleWebClientId.isNotBlank()

@@ -34,21 +34,35 @@ data class TrainingSession(
     val workoutName: String,
     val exercises: List<TrainingExercise>,
     val exerciseIndex: Int = 0,
-    val completedSeries: Int = 0,
+    /** Séries concluídas por posição no plano; a ordem dos exercícios nunca muda. */
+    val completedByExercise: Map<Int, Int> = emptyMap(),
     val restEndsAtMillis: Long? = null,
     val startedAtMillis: Long = 0,
     val updatedAtMillis: Long = 0,
 ) {
     val currentExercise: TrainingExercise? get() = exercises.getOrNull(exerciseIndex)
 
-    val isFinished: Boolean get() = exerciseIndex >= exercises.size
+    val isFinished: Boolean
+        get() = currentExercise == null ||
+            exercises.indices.all { completedSeriesFor(it) >= exercises[it].totalSeries }
 
-    val currentSeries: Int get() = completedSeries + 1
+    val currentSeries: Int get() = completedSeriesFor(exerciseIndex) + 1
 
     val totalSeries: Int get() = exercises.sumOf { it.totalSeries }
 
     val completedSeriesOverall: Int
-        get() = exercises.take(exerciseIndex).sumOf { it.totalSeries } + completedSeries
+        get() = exercises.indices.sumOf { index ->
+            completedSeriesFor(index).coerceAtMost(exercises[index].totalSeries)
+        }
+
+    /** Próximo pendente depois do ativo, na ordem do plano; volta ao começo ao chegar no fim. */
+    val nextPendingExercise: TrainingExercise?
+        get() = nextPendingIndex(exerciseIndex)?.let { exercises[it] }
+
+    fun completedSeriesFor(index: Int): Int = completedByExercise[index] ?: 0
+
+    fun isExerciseDone(index: Int): Boolean =
+        exercises.getOrNull(index)?.let { completedSeriesFor(index) >= it.totalSeries } ?: false
 
     fun restRemainingMillis(nowMillis: Long): Long =
         (restEndsAtMillis?.minus(nowMillis) ?: 0L).coerceAtLeast(0L)
@@ -58,16 +72,25 @@ data class TrainingSession(
 
     fun isResting(nowMillis: Long): Boolean = restRemainingMillis(nowMillis) > 0L
 
+    /** Troca o exercício ativo sem mover nada; o progresso de cada um é preservado. */
+    fun selectExercise(index: Int, nowMillis: Long): TrainingSession {
+        if (index !in exercises.indices) return this
+        if (index == exerciseIndex || isExerciseDone(index)) return this
+        return copy(exerciseIndex = index, updatedAtMillis = nowMillis)
+    }
+
     /** Avança uma série; inicia o descanso do exercício concluído quando há próximo passo. */
     fun completeSeries(nowMillis: Long): TrainingSession {
         val exercise = currentExercise ?: return this
-        val lastSeries = completedSeries + 1 >= exercise.totalSeries
-        val nextIndex = if (lastSeries) exerciseIndex + 1 else exerciseIndex
-        val finished = nextIndex >= exercises.size
-        val rest = if (finished) 0 else exercise.rest
+        val done = completedSeriesFor(exerciseIndex)
+        if (done >= exercise.totalSeries) return this
+        val completed = completedByExercise + (exerciseIndex to done + 1)
+        val exerciseFinished = done + 1 >= exercise.totalSeries
+        val nextIndex = if (exerciseFinished) nextPendingIndex(exerciseIndex) else exerciseIndex
+        val rest = if (nextIndex == null) 0 else exercise.rest
         return copy(
-            exerciseIndex = nextIndex,
-            completedSeries = if (lastSeries) 0 else completedSeries + 1,
+            exerciseIndex = nextIndex ?: exerciseIndex,
+            completedByExercise = completed,
             restEndsAtMillis = if (rest > 0) nowMillis + rest * 1000L else null,
             updatedAtMillis = nowMillis,
         )
@@ -91,6 +114,12 @@ data class TrainingSession(
     /** Limpa um descanso que já terminou enquanto o app estava fechado. */
     fun settleRest(nowMillis: Long): TrainingSession =
         if (restEndsAtMillis != null && !isResting(nowMillis)) skipRest(nowMillis) else this
+
+    private fun nextPendingIndex(after: Int): Int? {
+        val forward = exercises.indices.filter { it > after }
+        val fromStart = exercises.indices.filter { it < after }
+        return (forward + fromStart).firstOrNull { !isExerciseDone(it) }
+    }
 
     companion object {
         fun start(workout: Workout, nowMillis: Long): TrainingSession? {

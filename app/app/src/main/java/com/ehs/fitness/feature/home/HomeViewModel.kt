@@ -68,6 +68,22 @@ class HomeViewModel(
         }
     }
 
+    /** Recarrega só o acompanhamento ao voltar para a tela; treino concluído marca o hábito sozinho. */
+    fun refreshTracking() {
+        if (_state.value.loading) return
+        viewModelScope.launch {
+            val config = attempt { trackingRepository.config() }
+            val today = attempt { trackingRepository.today() }
+            if (config.isFailure && today.isFailure) return@launch
+            _state.update {
+                it.copy(
+                    tracking = config.getOrNull() ?: it.tracking,
+                    trackingToday = today.getOrNull() ?: it.trackingToday,
+                )
+            }
+        }
+    }
+
     fun setCreatine(value: Boolean) {
         register(_state.value.trackingToday.copy(creatine = value))
     }

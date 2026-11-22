@@ -2,7 +2,9 @@ package com.ehs.fitness.feature.workouts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ehs.fitness.core.device.RestVibrator
 import com.ehs.fitness.core.network.userMessage
+import com.ehs.fitness.data.repository.TrackingRepository
 import com.ehs.fitness.data.repository.TrainingSessionRepository
 import com.ehs.fitness.data.repository.WorkoutRepository
 import com.ehs.fitness.domain.workouts.TrainingSession
@@ -24,11 +26,16 @@ data class TrainingUiState(
     val remainingSeconds: Int = 0,
     val loadSaving: Boolean = false,
     val loadError: String? = null,
+    val trackingSaving: Boolean = false,
+    val trackingSaved: Boolean = false,
+    val trackingError: String? = null,
 )
 
 class TrainingViewModel(
     private val workouts: WorkoutRepository,
     private val sessions: TrainingSessionRepository,
+    private val tracking: TrackingRepository,
+    private val restVibrator: RestVibrator,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TrainingUiState())
     val state: StateFlow<TrainingUiState> = _state.asStateFlow()
@@ -80,6 +87,15 @@ class TrainingViewModel(
         val next = session.completeSeries(System.currentTimeMillis())
         sessions.save(next)
         publish(next)
+        if (next.isFinished && !session.isFinished) markWorkoutTrained()
+    }
+
+    fun selectExercise(index: Int) {
+        val session = _state.value.session ?: return
+        val next = session.selectExercise(index, System.currentTimeMillis())
+        if (next == session) return
+        sessions.save(next)
+        publish(next)
     }
 
     fun skipRest() {
@@ -118,6 +134,30 @@ class TrainingViewModel(
         else -> "Não foi possível atualizar o plano; a carga vale apenas nesta execução."
     }
 
+    /** Marca o hábito "treino" do dia quando a execução termina; falha vira aviso na tela final. */
+    private fun markWorkoutTrained() {
+        if (_state.value.trackingSaved || _state.value.trackingSaving) return
+        _state.update { it.copy(trackingSaving = true, trackingError = null) }
+        viewModelScope.launch {
+            try {
+                val today = tracking.today()
+                if (!today.trained) tracking.register(today.copy(trained = true))
+                _state.update { it.copy(trackingSaving = false, trackingSaved = true) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        trackingSaving = false,
+                        trackingError = e.userMessage(
+                            "Treino concluído, mas não foi possível registrar o acompanhamento de hoje.",
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
     fun restart() {
         val session = _state.value.session ?: return
         val now = System.currentTimeMillis()
@@ -143,8 +183,7 @@ class TrainingViewModel(
         ticker?.cancel()
         val remaining = session.restRemainingSeconds(System.currentTimeMillis())
         _state.update {
-            val changedExercise =
-                it.session?.currentExercise?.exerciseId != session.currentExercise?.exerciseId
+            val changedExercise = it.session?.exerciseIndex != session.exerciseIndex
             it.copy(
                 loading = false,
                 session = session,
@@ -165,10 +204,17 @@ class TrainingViewModel(
                     val settled = current.settleRest(now)
                     sessions.save(settled)
                     _state.update { it.copy(session = settled, remainingSeconds = 0) }
+                    // Vibra só se o fim foi presenciado agora (evita alerta atrasado após o aparelho dormir).
+                    val endedAgo = current.restEndsAtMillis?.let { now - it }
+                    if (endedAgo != null && endedAgo in 0..REST_ALERT_WINDOW_MILLIS) restVibrator.restFinished()
                     break
                 }
                 _state.update { it.copy(remainingSeconds = current.restRemainingSeconds(now)) }
             }
         }
+    }
+
+    private companion object {
+        const val REST_ALERT_WINDOW_MILLIS = 60_000L
     }
 }
