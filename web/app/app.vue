@@ -8,7 +8,6 @@ useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
     { name: 'theme-color', content: '#4F46E5' },
-    { name: 'apple-mobile-web-app-title', content: 'Fitness' },
     { name: 'description', content: description }
   ],
   link: [
