@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ehs.fitness.core.ui.theme.FitnessTheme
 
 @Composable
 fun BrandMark(dark: Boolean = false, modifier: Modifier = Modifier) {
@@ -27,15 +28,15 @@ fun BrandMark(dark: Boolean = false, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.primary,
+            shape = RoundedCornerShape(10.dp),
+            color = if (dark) FitnessTheme.colors.sidebarAccent else MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(32.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Filled.FitnessCenter,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
+                    tint = if (dark) FitnessTheme.colors.sidebarOnAccent else MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(18.dp),
                 )
             }

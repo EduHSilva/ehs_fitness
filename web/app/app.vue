@@ -7,7 +7,7 @@ useHead({
   titleTemplate: title => (title ? `${title} · Fitness` : 'Fitness — Sua rotina em movimento'),
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { name: 'theme-color', content: '#4F46E5' },
+    { name: 'theme-color', content: '#B25A33' },
     { name: 'description', content: description }
   ],
   link: [

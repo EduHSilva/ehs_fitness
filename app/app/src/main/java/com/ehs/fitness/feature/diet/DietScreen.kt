@@ -153,11 +153,7 @@ private fun MealCard(meal: Meal) {
                         )
                     }
                 }
-                Tag(
-                    text = meal.hour.ifBlank { "--:--" },
-                    color = FitnessTheme.colors.secondary,
-                    background = FitnessTheme.colors.secondarySoft,
-                )
+                Tag(text = meal.hour.ifBlank { "--:--" })
             }
 
             if (meal.foods.isNotEmpty()) {

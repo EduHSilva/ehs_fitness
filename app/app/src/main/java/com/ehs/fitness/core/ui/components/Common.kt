@@ -3,6 +3,7 @@ package com.ehs.fitness.core.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,11 +62,11 @@ fun ContentCard(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, FitnessTheme.colors.border),
     ) {
-        Column(Modifier.padding(18.dp), content = content)
+        Column(Modifier.padding(20.dp), content = content)
     }
 }
 
@@ -168,12 +169,13 @@ fun EmptyNote(text: String, modifier: Modifier = Modifier) {
 fun Tag(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary,
-    background: Color = FitnessTheme.colors.primarySoft,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    background: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
 ) {
     Box(
         modifier = modifier
             .background(background, RoundedCornerShape(6.dp))
+            .border(1.dp, FitnessTheme.colors.border, RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 3.dp),
     ) {
         Text(text, color = color, style = MaterialTheme.typography.labelSmall)
@@ -297,8 +299,14 @@ fun IntroBanner(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                Brush.linearGradient(listOf(Color(0xFF4338CA), Color(0xFF4F46E5), Color(0xFF6D28D9))),
-                RoundedCornerShape(18.dp),
+                Brush.linearGradient(
+                    listOf(
+                        FitnessTheme.colors.primaryStrong,
+                        MaterialTheme.colorScheme.primary,
+                        FitnessTheme.colors.secondary,
+                    ),
+                ),
+                RoundedCornerShape(20.dp),
             )
             .padding(horizontal = 22.dp, vertical = 24.dp),
     ) {
@@ -307,15 +315,23 @@ fun IntroBanner(
                 Text(
                     eyebrow.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFFE0E7FF),
+                    color = FitnessTheme.colors.primarySoft,
                 )
-                Text(title, style = MaterialTheme.typography.headlineSmall, color = Color.White)
-                Text(description, style = MaterialTheme.typography.bodySmall, color = Color(0xFFEDE9FE))
+                Text(
+                    title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+                Text(
+                    description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f),
+                )
             }
             Icon(
                 icon,
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.35f),
+                tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f),
                 modifier = Modifier.size(56.dp),
             )
         }
@@ -369,7 +385,13 @@ fun PageState(
 }
 
 @Composable
-fun InitialAvatar(name: String, size: Dp = 40.dp, modifier: Modifier = Modifier) {
+fun InitialAvatar(
+    name: String,
+    size: Dp = 40.dp,
+    modifier: Modifier = Modifier,
+    background: Color? = null,
+    contentColor: Color? = null,
+) {
     val initials = remember(name) {
         val parts = name.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
         when {
@@ -381,12 +403,12 @@ fun InitialAvatar(name: String, size: Dp = 40.dp, modifier: Modifier = Modifier)
     Box(
         modifier = modifier
             .size(size)
-            .background(Brush.linearGradient(listOf(Color(0xFF4F46E5), Color(0xFF7C3AED))), CircleShape),
+            .background(background ?: MaterialTheme.colorScheme.primary, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = initials,
-            color = Color.White,
+            color = contentColor ?: MaterialTheme.colorScheme.onPrimary,
             style = if (size >= 56.dp) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.labelLarge,
         )
     }
@@ -431,8 +453,8 @@ fun PrimaryButton(
         enabled = enabled && !loading,
         modifier = modifier
             .fillMaxWidth()
-            .height(46.dp),
-        shape = RoundedCornerShape(9.dp),
+            .height(40.dp),
+        shape = RoundedCornerShape(10.dp),
     ) {
         if (loading) {
             CircularProgressIndicator(

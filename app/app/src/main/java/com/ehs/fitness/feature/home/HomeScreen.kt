@@ -39,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -251,7 +250,7 @@ fun HomeScreen(
                             Text(
                                 if (upcoming.first == today) "TREINO DE HOJE" else "PRÓXIMO TREINO",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = FitnessTheme.colors.secondary,
+                                color = MaterialTheme.colorScheme.primary,
                             )
                             Tag(WeekPlan.dayLabel(upcoming.first))
                         }
@@ -382,8 +381,14 @@ private fun FocusCard(todayWorkout: String?, next: String?, onOpenWorkouts: () -
         Modifier
             .fillMaxWidth()
             .background(
-                Brush.linearGradient(listOf(Color(0xFF4338CA), Color(0xFF4F46E5), Color(0xFF6D28D9))),
-                RoundedCornerShape(18.dp),
+                Brush.linearGradient(
+                    listOf(
+                        FitnessTheme.colors.primaryStrong,
+                        MaterialTheme.colorScheme.primary,
+                        FitnessTheme.colors.secondary,
+                    ),
+                ),
+                RoundedCornerShape(20.dp),
             )
             .padding(horizontal = 22.dp, vertical = 24.dp),
     ) {
@@ -391,7 +396,7 @@ private fun FocusCard(todayWorkout: String?, next: String?, onOpenWorkouts: () -
             Text(
                 "SEU FOCO DE HOJE",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFFE0E7FF),
+                color = FitnessTheme.colors.primarySoft,
             )
             Text(
                 when {
@@ -400,7 +405,7 @@ private fun FocusCard(todayWorkout: String?, next: String?, onOpenWorkouts: () -
                     else -> "Sua evolução começa agora."
                 },
                 style = MaterialTheme.typography.headlineSmall,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -409,15 +414,15 @@ private fun FocusCard(todayWorkout: String?, next: String?, onOpenWorkouts: () -
                 else if (next != null) "Seu próximo treino da semana está pronto."
                 else "Cadastre um treino e comece a acompanhar sua rotina.",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFEDE9FE),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f),
             )
             Spacer(Modifier.height(4.dp))
             Button(
                 onClick = onOpenWorkouts,
-                shape = RoundedCornerShape(9.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF4338CA),
+                    containerColor = MaterialTheme.colorScheme.onPrimary,
+                    contentColor = MaterialTheme.colorScheme.primary,
                 ),
             ) {
                 Text("Abrir treinos", fontWeight = FontWeight.SemiBold)
