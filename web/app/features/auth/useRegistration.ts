@@ -9,6 +9,8 @@ export function useRegistration() {
   const errorMessage = ref('')
   const loading = ref(false)
   const confirmationOpen = ref(false)
+  /** Mensagem do back: avisa que, se o e-mail já tem conta, é preciso entrar. */
+  const confirmationMessage = ref('')
 
   async function register() {
     errorMessage.value = ''
@@ -20,12 +22,13 @@ export function useRegistration() {
 
     loading.value = true
     try {
-      await registerAccount({
+      const response = await registerAccount({
         username: name.value.trim(),
         email: email.value.trim(),
         password: password.value,
         role: role.value
       })
+      confirmationMessage.value = response.message || ''
       confirmationOpen.value = true
     } catch (cause: unknown) {
       const error = cause as { data?: { message?: string }, message?: string }
@@ -48,6 +51,7 @@ export function useRegistration() {
     errorMessage,
     loading,
     confirmationOpen,
+    confirmationMessage,
     register,
     goToLogin
   }

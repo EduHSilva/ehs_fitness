@@ -5,6 +5,7 @@ import com.ehs.fitness.data.model.ManagedLink
 import com.ehs.fitness.data.model.Meal
 import com.ehs.fitness.data.model.MealFood
 import com.ehs.fitness.data.model.TrackingConfig
+import com.ehs.fitness.data.model.TrackingDay
 import com.ehs.fitness.data.model.WeekDay
 import com.ehs.fitness.data.model.Workout
 import com.ehs.fitness.data.model.WorkoutExercise
@@ -16,6 +17,7 @@ import com.ehs.fitness.data.remote.MyLinkDto
 import com.ehs.fitness.data.remote.UserConfigDto
 import com.ehs.fitness.data.remote.WorkoutDto
 import com.ehs.fitness.data.remote.WorkoutWeekDayDto
+import java.time.LocalDate
 
 object Mappers {
     fun workoutExercise(dto: ExerciseDto): WorkoutExercise? {
@@ -95,4 +97,15 @@ object Mappers {
         trained = dto.trained,
         cardio = dto.cardio.coerceAtLeast(0.0),
     )
+
+    fun trackingDay(dto: HistoryDto): TrackingDay? {
+        val raw = dto.eventDate ?: return null
+        val date = runCatching { LocalDate.parse(raw) }.getOrNull() ?: return null
+        return TrackingDay(
+            date = date,
+            creatine = dto.creatine,
+            trained = dto.trained,
+            cardio = dto.cardio.coerceAtLeast(0.0),
+        )
+    }
 }

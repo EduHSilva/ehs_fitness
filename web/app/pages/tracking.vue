@@ -35,6 +35,12 @@ useSeoMeta({ title: 'Acompanhamento' })
           <h1>Acompanhamento</h1>
         </div>
         <div class="topbar-actions">
+          <NuxtLink
+            class="secondary-button"
+            :to="{ path: '/history', query: $route.query }"
+          >
+            <UIcon name="i-lucide-calendar-check" /> Registros
+          </NuxtLink>
           <button
             class="round-button"
             aria-label="Atualizar acompanhamento"

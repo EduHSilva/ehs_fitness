@@ -16,8 +16,9 @@ por ambiente para consumir a API externa. O app Flutter legado foi removido.
   treinos, agenda e dieta. `HEALTH_PERSONAL` gerencia treinos/agenda dos alunos
   vinculados e `HEALTH_NUTRITIONIST` gerencia a dieta; ambos leem o plano completo.
 - **App Android**: MVP de consulta e execução para o aluno (início, treinos, agenda,
-  dieta e perfil). Gestão de plano acontece apenas no web; o início também registra o
-  acompanhamento diário (creatina, treino e cardio) quando ativado no web.
+  dieta, registros e perfil). Gestão de plano acontece apenas no web; o início também
+  registra o acompanhamento diário (creatina, treino e cardio) quando ativado no web, e
+  a tela Registros mostra o calendário do mês.
 - O aluno com profissional ativo no domínio fica somente leitura naquele domínio
   (personal → treinos/agenda; nutricionista → dieta).
 - Regras completas e matriz de permissões: `regras-negocio.md`. Pendências: `TODO.md`.
@@ -48,8 +49,8 @@ data/
   mappers/        # DTO -> modelo de domínio
   model/          # modelos usados pelas telas
   repository/     # casos de uso de acesso à API
-domain/           # regras puras (auth, workouts, diet) + testes JVM
-feature/          # auth, home, workouts, diet, profile (tela + ViewModel)
+domain/           # regras puras (auth, workouts, diet, tracking) + testes JVM
+feature/          # auth, home, workouts, diet, history, profile (tela + ViewModel)
 navigation/       # Routes e FitnessApp (drawer, top bar, bottom bar, NavHost)
 di/               # AppContainer (injeção manual)
 ```
@@ -78,8 +79,11 @@ Regras para Kotlin/Compose:
   apenas na execução, com aviso na tela.
 - Cardio é uma etapa única por tempo (`duration_seconds`), nunca séries × repetições.
 - O acompanhamento diário (creatina, treino e cardio em minutos) é definido no web
-  (`GET/PUT /fitness/config/user`); o app só exibe e registra
-  (`GET/PUT /fitness/config/history`). O histórico diário é privado do aluno.
+  (`GET/PUT /fitness/config/user`); o app registra e exibe
+  (`GET/PUT /fitness/config/history`). O histórico é escrito apenas pelo aluno; o
+  profissional com vínculo ativo lê os registros em modo somente leitura
+  (`GET /fitness/config/history?from=&to=&student_id=`). O app expõe a tela Registros
+  (calendário mensal, filtro por tipo e estatísticas) com os tipos ativos na configuração.
 - Novas dependências entram em `app/gradle/libs.versions.toml` e são referenciadas por
   alias em `app/app/build.gradle.kts`.
 
@@ -113,8 +117,9 @@ O app contorna o que dá e o restante está registrado no TODO do backend:
   "Gerenciado por <profissional>".
 - O exercício do treino carrega `duration_seconds` (cardio por tempo; 0 = séries e
   repetições). `GET/PUT /fitness/config/user` aceitam `student_id` para qualquer
-  profissional com vínculo ativo; `GET /fitness/config/history` responde 404 sem
-  registro no dia.
+  profissional com vínculo ativo; `GET /fitness/config/history` sem parâmetros responde
+  404 sem registro no dia, e com `from`/`to` devolve a lista do intervalo (máx. 366 dias)
+  e aceita `student_id` para leitura pelo profissional vinculado.
 - `/users/auth/me` devolve `token: null`: os clientes preservam o token local até um 401.
 - Carga, descanso e observações são opcionais: campo vazio vai como `null` no payload.
 
@@ -127,6 +132,10 @@ O app contorna o que dá e o restante está registrado no TODO do backend:
 - Funcionalidades de domínio: `web/app/features/<domínio>/`.
 - Acompanhamento diário: `/tracking` usa `features/tracking/` e a configuração do aluno
   (`/fitness/config/user`); treinos cardio usam duração em minutos no formulário.
+  `/history` usa a mesma feature para o calendário mensal (`fetchTrackingHistory`,
+  `history.ts` puro + `useTrackingHistory`), somente leitura para aluno e profissional.
+  O calendário está em `pages/history.vue` e o acesso pelos alunos vinculados em
+  `pages/students.vue`.
 - Proxy da API: `web/server/api/[...path].ts`.
 - Configuração local: `web/.env`, com `URL_API`.
 

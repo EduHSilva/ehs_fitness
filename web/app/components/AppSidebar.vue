@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ active: 'home' | 'diet' | 'workouts' | 'agenda' | 'tracking' | 'students' | 'profile' }>()
+defineProps<{ active: 'home' | 'diet' | 'workouts' | 'agenda' | 'tracking' | 'history' | 'students' | 'profile' }>()
 
 const router = useRouter()
 const { isProfessional, clear } = useSession()
@@ -40,6 +40,10 @@ function logout() {
         to="/tracking"
         :class="{ active: active === 'tracking' }"
       ><UIcon name="i-lucide-heart-pulse" /> Acompanhamento</NuxtLink>
+      <NuxtLink
+        to="/history"
+        :class="{ active: active === 'history' }"
+      ><UIcon name="i-lucide-calendar-check" /> Registros</NuxtLink>
       <NuxtLink
         v-if="isProfessional"
         to="/students"

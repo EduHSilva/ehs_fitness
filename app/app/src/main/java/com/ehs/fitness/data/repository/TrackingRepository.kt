@@ -1,12 +1,15 @@
 package com.ehs.fitness.data.repository
 
 import com.ehs.fitness.core.network.unwrap
+import com.ehs.fitness.core.network.unwrapList
 import com.ehs.fitness.data.mappers.Mappers
 import com.ehs.fitness.data.model.DailyTracking
 import com.ehs.fitness.data.model.TrackingConfig
+import com.ehs.fitness.data.model.TrackingDay
 import com.ehs.fitness.data.remote.TrackingApi
 import com.ehs.fitness.data.remote.UpdateHistoryRequest
 import retrofit2.HttpException
+import java.time.LocalDate
 
 class TrackingRepository(private val api: TrackingApi) {
     suspend fun config(): TrackingConfig =
@@ -29,4 +32,10 @@ class TrackingRepository(private val api: TrackingApi) {
                 ),
             ).unwrap(),
         )
+
+    /** Intervalo inclusivo; o backend devolve a lista ordenada por data. */
+    suspend fun history(from: LocalDate, to: LocalDate): List<TrackingDay> =
+        api.history(from.toString(), to.toString())
+            .unwrapList()
+            .mapNotNull(Mappers::trackingDay)
 }

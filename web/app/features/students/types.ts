@@ -44,7 +44,7 @@ export type MyLinkCard = {
   since?: string
 }
 
-export type ManagedModule = 'workouts' | 'diet' | 'tracking'
+export type ManagedModule = 'workouts' | 'diet' | 'tracking' | 'history'
 
 export function domainLabel(domain: StudentDomain): string {
   return domain === 'PERSONAL' ? 'Personal trainer' : 'Nutricionista'

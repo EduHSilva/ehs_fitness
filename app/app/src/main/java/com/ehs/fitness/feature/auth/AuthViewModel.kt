@@ -2,6 +2,7 @@ package com.ehs.fitness.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ehs.fitness.core.network.EmailConfirmationRequiredException
 import com.ehs.fitness.core.network.userMessage
 import com.ehs.fitness.data.repository.AuthRepository
 import com.ehs.fitness.domain.auth.AuthValidation
@@ -15,6 +16,8 @@ import kotlinx.coroutines.launch
 data class AuthUiState(
     val pending: Boolean = false,
     val error: String? = null,
+    /** 202 do login: conta sem acesso ao app, e-mail de confirmação enviado. */
+    val notice: String? = null,
     val registerPending: Boolean = false,
     val registerError: String? = null,
     val registerSuccess: Boolean = false,
@@ -32,11 +35,13 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
         if (_state.value.pending) return
         viewModelScope.launch {
-            _state.update { it.copy(pending = true, error = null) }
+            _state.update { it.copy(pending = true, error = null, notice = null) }
             try {
                 authRepository.login(email, password)
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: EmailConfirmationRequiredException) {
+                _state.update { it.copy(notice = e.message) }
             } catch (e: Exception) {
                 _state.update {
                     it.copy(error = e.userMessage("Não foi possível entrar. Confira suas credenciais."))
@@ -50,11 +55,13 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
     fun loginWithGoogle(idToken: String) {
         if (_state.value.pending) return
         viewModelScope.launch {
-            _state.update { it.copy(pending = true, error = null) }
+            _state.update { it.copy(pending = true, error = null, notice = null) }
             try {
                 authRepository.loginWithGoogle(idToken)
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: EmailConfirmationRequiredException) {
+                _state.update { it.copy(notice = e.message) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.userMessage("Não foi possível entrar com o Google.")) }
             } finally {
@@ -95,7 +102,7 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
     }
 
     fun clearErrors() {
-        _state.update { it.copy(error = null, registerError = null) }
+        _state.update { it.copy(error = null, notice = null, registerError = null) }
     }
 
     fun reportGoogleFailure() {

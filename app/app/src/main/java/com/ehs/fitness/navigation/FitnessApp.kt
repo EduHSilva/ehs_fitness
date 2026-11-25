@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -67,6 +68,7 @@ import com.ehs.fitness.feature.auth.AuthScreen
 import com.ehs.fitness.feature.auth.BrandMark
 import com.ehs.fitness.feature.auth.SessionViewModel
 import com.ehs.fitness.feature.diet.DietScreen
+import com.ehs.fitness.feature.history.HistoryScreen
 import com.ehs.fitness.feature.home.HomeScreen
 import com.ehs.fitness.feature.profile.ProfileScreen
 import com.ehs.fitness.feature.workouts.TrainingScreen
@@ -86,6 +88,7 @@ private val drawerDestinations = listOf(
     Destination(Routes.WORKOUTS, Icons.Filled.FitnessCenter, "Treinos"),
     Destination(Routes.WEEK, Icons.Filled.CalendarMonth, "Agenda semanal"),
     Destination(Routes.DIET, Icons.Filled.Restaurant, "Alimentação"),
+    Destination(Routes.HISTORY, Icons.Filled.EventAvailable, "Registros"),
     Destination(Routes.PROFILE, Icons.Filled.Person, "Perfil"),
 )
 
@@ -127,6 +130,7 @@ private fun MainScaffold(user: AuthUser, onLogout: () -> Unit) {
         Routes.WORKOUTS -> "Treinos"
         Routes.WEEK -> "Agenda semanal"
         Routes.DIET -> "Alimentação"
+        Routes.HISTORY -> "Registros"
         Routes.PROFILE -> "Perfil"
         Routes.TRAINING -> "Execução"
         else -> "Início"
@@ -215,6 +219,7 @@ private fun MainScaffold(user: AuthUser, onLogout: () -> Unit) {
                             onOpenWorkouts = { go(Routes.WORKOUTS) },
                             onOpenDiet = { go(Routes.DIET) },
                             onOpenWeek = { go(Routes.WEEK) },
+                            onOpenHistory = { go(Routes.HISTORY) },
                         )
                     }
                     composable(Routes.WORKOUTS) {
@@ -240,6 +245,9 @@ private fun MainScaffold(user: AuthUser, onLogout: () -> Unit) {
                     }
                     composable(Routes.DIET) {
                         DietScreen()
+                    }
+                    composable(Routes.HISTORY) {
+                        HistoryScreen()
                     }
                     composable(Routes.PROFILE) {
                         ProfileScreen(onLogout = onLogout)

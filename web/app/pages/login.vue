@@ -9,6 +9,8 @@ const showPassword = ref(false)
 const keepConnected = ref(true)
 const loading = ref(false)
 const errorMessage = ref('')
+/** 202 do login: e-mail de confirmação de acesso enviado (sem sessão emitida). */
+const emailNotice = ref('')
 const config = useRuntimeConfig()
 
 type GoogleTokenResponse = { credential?: string }
@@ -109,6 +111,7 @@ function reportError(error: unknown) {
 
 async function submit() {
   errorMessage.value = ''
+  emailNotice.value = ''
   if (!email.value.trim() || !password.value) {
     errorMessage.value = 'Preencha seu e-mail e senha para continuar.'
     return
@@ -124,7 +127,12 @@ async function submit() {
       method: 'POST',
       body: { email: email.value.trim(), password: password.value, app: 'FITNESS' }
     })
-    if (!response.data?.token) throw new Error(response.message || 'Não foi possível entrar com estas credenciais.')
+    // Sem token = 202: a conta existe, mas o acesso ainda não foi confirmado
+    // e o link foi enviado por e-mail.
+    if (!response.data?.token) {
+      emailNotice.value = response.message || 'Enviamos as instruções de acesso para o seu e-mail.'
+      return
+    }
     applySession(response.data)
     await afterLogin()
   } catch (error: unknown) {
@@ -136,13 +144,17 @@ async function submit() {
 
 async function submitGoogle(idToken: string) {
   errorMessage.value = ''
+  emailNotice.value = ''
   loading.value = true
   try {
     const response = await $fetch<{ data?: SessionPayload, message?: string }>('/api/users/auth/login', {
       method: 'POST',
       body: { tokenGmail: idToken, app: 'FITNESS' }
     })
-    if (!response.data?.token) throw new Error(response.message || 'Não foi possível entrar com estas credenciais.')
+    if (!response.data?.token) {
+      emailNotice.value = response.message || 'Enviamos as instruções de acesso para o seu e-mail.'
+      return
+    }
     applySession(response.data)
     await afterLogin()
   } catch (error: unknown) {
@@ -277,6 +289,14 @@ useSeoMeta({ title: 'Entrar' })
             role="alert"
           >
             Não foi possível carregar o login com Google.
+          </p>
+          <p
+            v-if="emailNotice"
+            class="notice-banner"
+            role="status"
+          >
+            <UIcon name="i-lucide-mail-check" />
+            {{ emailNotice }}
           </p>
           <p
             v-if="errorMessage"

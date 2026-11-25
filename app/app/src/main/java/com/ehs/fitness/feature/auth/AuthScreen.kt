@@ -272,6 +272,31 @@ fun AuthScreen() {
                         ErrorBanner(message = error)
                     }
 
+                    val notice = if (isRegister) null else state.notice
+                    if (notice != null) {
+                        Spacer(Modifier.height(14.dp))
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .background(FitnessTheme.colors.successSoft, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = FitnessTheme.colors.success,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Text(
+                                text = notice,
+                                color = FitnessTheme.colors.success,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+
                     Spacer(Modifier.height(18.dp))
                     PrimaryButton(
                         text = when {

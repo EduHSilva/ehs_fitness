@@ -50,6 +50,12 @@ interface TrackingApi {
     @GET("fitness/config/history")
     suspend fun today(): Envelope<HistoryDto>
 
+    @GET("fitness/config/history")
+    suspend fun history(
+        @Query("from") from: String,
+        @Query("to") to: String,
+    ): Envelope<List<HistoryDto>>
+
     @PUT("fitness/config/history")
     suspend fun updateToday(@Body body: UpdateHistoryRequest): Envelope<HistoryDto>
 }

@@ -40,7 +40,7 @@
 | Criar, editar e excluir treino/agenda | Sim | Não | Próprio + alunos vinculados | Próprio (leitura dos alunos) |
 | Criar, editar e excluir refeição | Sim | Não | Próprio (leitura dos alunos) | Próprio + alunos vinculados |
 | Listar/gerenciar alunos e convites | Não | Não | Sim | Sim |
-| Ver config e acompanhamento diário | Sim | Sim | Próprio | Próprio |
+| Ver config e acompanhamento diário | Sim | Sim | Próprio + alunos (registros somente leitura) | Próprio + alunos (registros somente leitura) |
 
 - "Profissional no domínio" significa personal para treinos/agenda e nutricionista
   para dieta. O aluno pode ter os dois ao mesmo tempo; cada vínculo bloqueia a edição
@@ -128,22 +128,31 @@
 ## Acompanhamento diário
 
 - Registro diário com creatina (sim/não), treino (sim/não) e cardio (minutos), um por dia
-  por aluno (upsert). A consulta devolve apenas **hoje** (404 se não houver registro).
+  por aluno (upsert). Sem parâmetros, a consulta devolve apenas **hoje** (404 se não
+  houver registro); com `from`/`to` (YYYY-MM-DD, inclusive, máximo 366 dias) devolve a
+  lista ordenada por data.
 - O treino diário registra apenas que o aluno treinou naquele dia; quando existir o
   registro real da execução, esse campo pode ser derivado dela.
 - Configurações do aluno: `showCreatine`, `showWorkout` e `dailyCardio` (minutos; 0
   desativa) controlam o que aparece no app. Qualquer profissional com vínculo ativo
-  (personal **ou** nutricionista) lê e ajusta a configuração do aluno via `student_id`;
-  o registro diário (`/config/history`) continua privado do aluno.
+  (personal **ou** nutricionista) lê e ajusta a configuração do aluno via `student_id`.
+- O histórico diário é escrito apenas pelo próprio aluno; o profissional com vínculo
+  ativo lê os registros do aluno em modo somente leitura (`student_id` em
+  `GET /config/history`).
 - A primeira consulta sem configuração cria o default e devolve 200; nunca 500.
 - O web expõe `/tracking` (Acompanhamento) para definir as opções do próprio usuário ou
   de um aluno vinculado; o app mostra o cartão de acompanhamento no início somente
   quando ao menos uma opção está ativa.
+- O web expõe `/history` (Registros) com calendário mensal, filtro por tipo e estatísticas
+  básicas do mês. A tela é somente leitura para o aluno e para o profissional vinculado,
+  e mostra apenas os tipos ativos no acompanhamento.
+- O app também expõe a tela Registros (calendário mensal, filtros e estatísticas); cada
+  aluno vê apenas os próprios registros.
 
 ## App Android (MVP)
 
-- Telas de consulta: início, treinos, agenda semanal, alimentação e perfil; além delas,
-  a tela de execução do treino.
+- Telas de consulta: início, treinos, agenda semanal, alimentação, registros e perfil;
+  além delas, a tela de execução do treino.
 - Não há botões ou rotas de criar, editar ou excluir treino, agenda ou refeição, nem
   formulários de exercício/alimento.
 - Perfil continua permitindo nome, tema, política de privacidade, troca de senha e sair.
@@ -155,8 +164,8 @@
   execução e que é gravada no plano quando online (ver Treinos).
 - O início exibe o cartão de acompanhamento diário quando a configuração definida no web
   ativa creatina, treino e/ou cardio: o aluno marca a creatina e o treino do dia e
-  registra os minutos de cardio (upsert em `/fitness/config/history`); o histórico é
-  privado do aluno.
+  registra os minutos de cardio (upsert em `/fitness/config/history`). O cartão leva à
+  tela Registros, que lista o mês corrente com calendário e estatísticas.
 - Profissionais usam o web para gestão. Se entrarem no app, veem apenas os próprios
   dados, sem superfície de gestão. Contas com `HEALTH_USER` + role de profissional
   continuam sendo alunos no app.
@@ -211,7 +220,8 @@ Rotas expostas pelo gateway em `/fitness/**` (Swagger em `/fitness/swagger/index
   `tag_id` carrega o mesmo id); ids inexistentes respondem `404`; `GET /fitness/config/user`
   cria o default no primeiro acesso e aceita `student_id` para qualquer profissional com
   vínculo ativo; `/fitness/config/history` carrega `creatine`, `trained` e `cardio`
-  (404 sem registro no dia).
+  (404 sem registro no dia, sem parâmetros); com `from`/`to` devolve a lista do intervalo
+  e aceita `student_id` para leitura pelo profissional vinculado.
 - CORS do serviço aceita `PATCH` (além de GET/POST/PUT/DELETE), para chamadas diretas do
   navegador a `PATCH /fitness/students/links/:id`.
 - Swagger (`fitness/docs`) regenerado em 2026-11-18: inclui `duration_seconds`,

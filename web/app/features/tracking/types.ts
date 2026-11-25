@@ -10,3 +10,12 @@ export type TrackingInput = {
   dailyCardio: number
   showWorkout: boolean
 }
+
+/** Registro diário do aluno (`eventDate` no formato YYYY-MM-DD). */
+export type TrackingDay = {
+  id?: number
+  eventDate: string
+  creatine: boolean
+  cardio: number
+  trained: boolean
+}

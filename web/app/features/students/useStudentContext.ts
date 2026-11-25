@@ -27,10 +27,11 @@ export function useStudentContext() {
 
   // Sem vínculo na URL o plano é o do próprio usuário: o gate vem de
   // GET /students/links, que lista os profissionais ativos de cada domínio.
+  // Com vínculo, cada domínio exige o papel correspondente: o personal consulta
+  // a dieta e o nutricionista consulta treinos/agenda, mas só o dono do domínio edita.
   function canManageOwn(target: StudentDomain): boolean {
     if (!studentId.value) return !managed.isManaged(target)
-    if (!domain.value) return true
-    return canWriteDomain(user.value, domain.value)
+    return canWriteDomain(user.value, target)
   }
 
   function managerName(target: StudentDomain): string {

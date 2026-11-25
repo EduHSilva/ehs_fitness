@@ -70,6 +70,7 @@ fun HomeScreen(
     onOpenWorkouts: () -> Unit,
     onOpenDiet: () -> Unit,
     onOpenWeek: () -> Unit,
+    onOpenHistory: () -> Unit,
 ) {
     val vm: HomeViewModel = appViewModel {
         HomeViewModel(it.workoutRepository, it.dietRepository, it.trackingRepository)
@@ -156,6 +157,7 @@ fun HomeScreen(
                         onCreatine = vm::setCreatine,
                         onTrained = vm::setTrained,
                         onCardio = vm::setCardio,
+                        onOpenHistory = onOpenHistory,
                     )
                 }
             }
@@ -442,14 +444,26 @@ private fun DailyTrackingCard(
     onCreatine: (Boolean) -> Unit,
     onTrained: (Boolean) -> Unit,
     onCardio: (Double) -> Unit,
+    onOpenHistory: () -> Unit,
 ) {
     ContentCard {
-        Text(
-            "ACOMPANHAMENTO DE HOJE",
-            style = MaterialTheme.typography.labelSmall,
-            color = FitnessTheme.colors.subtle,
-        )
-        Text(trackingTitle(config), style = MaterialTheme.typography.titleMedium)
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "ACOMPANHAMENTO DE HOJE",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = FitnessTheme.colors.subtle,
+                )
+                Text(trackingTitle(config), style = MaterialTheme.typography.titleMedium)
+            }
+            TextButton(onClick = onOpenHistory) {
+                Text("Ver registros", style = MaterialTheme.typography.labelMedium)
+            }
+        }
         Spacer(Modifier.height(4.dp))
         Text(
             "Solicitado pelo seu profissional no web.",

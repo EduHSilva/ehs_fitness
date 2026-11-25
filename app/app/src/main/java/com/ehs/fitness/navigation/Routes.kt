@@ -5,6 +5,7 @@ object Routes {
     const val WORKOUTS = "workouts"
     const val WEEK = "week"
     const val DIET = "diet"
+    const val HISTORY = "history"
     const val PROFILE = "profile"
     const val TRAINING = "training/{workoutId}"
     const val TRAINING_WORKOUT_ARG = "workoutId"

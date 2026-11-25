@@ -1,5 +1,7 @@
 package com.ehs.fitness.data.model
 
+import java.time.LocalDate
+
 /** Exercício já vinculado a um treino, com as séries prescritas. */
 data class WorkoutExercise(
     val exerciseId: Int,
@@ -61,6 +63,14 @@ data class TrackingConfig(
 
 /** Registro do próprio dia. */
 data class DailyTracking(
+    val creatine: Boolean = false,
+    val trained: Boolean = false,
+    val cardio: Double = 0.0,
+)
+
+/** Registro diário com a data, usado no calendário de acompanhamento. */
+data class TrackingDay(
+    val date: LocalDate,
     val creatine: Boolean = false,
     val trained: Boolean = false,
     val cardio: Double = 0.0,

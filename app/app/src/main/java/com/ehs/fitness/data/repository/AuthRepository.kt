@@ -1,6 +1,8 @@
 package com.ehs.fitness.data.repository
 
 import com.ehs.fitness.core.network.ApiException
+import com.ehs.fitness.core.network.EmailConfirmationRequiredException
+import com.ehs.fitness.core.network.Envelope
 import com.ehs.fitness.core.network.unwrap
 import com.ehs.fitness.core.session.AuthSession
 import com.ehs.fitness.core.session.AuthUser
@@ -21,13 +23,13 @@ class AuthRepository(
     val session = sessionManager.session
 
     suspend fun login(email: String, password: String): AuthSession =
-        saveSession(
-            api.login(LoginRequest(email = email.trim(), password = password, app = APP_SCOPE)).unwrap(),
+        sessionFrom(
+            api.login(LoginRequest(email = email.trim(), password = password, app = APP_SCOPE)),
         )
 
     /** Mesmo endpoint; o serviço de usuários aceita `tokenGmail` no lugar de e-mail/senha. */
     suspend fun loginWithGoogle(idToken: String): AuthSession =
-        saveSession(api.login(LoginRequest(tokenGmail = idToken, app = APP_SCOPE)).unwrap())
+        sessionFrom(api.login(LoginRequest(tokenGmail = idToken, app = APP_SCOPE)))
 
     /** O cadastro responde 202: a conta só entra depois da confirmação por e-mail. */
     suspend fun register(email: String, username: String, password: String, role: String) {
@@ -77,6 +79,14 @@ class AuthRepository(
     }
 
     fun logout() = sessionManager.expire()
+
+    private fun sessionFrom(envelope: Envelope<LoginDto>): AuthSession {
+        val dto = envelope.data
+            ?: throw EmailConfirmationRequiredException(
+                envelope.message ?: "Enviamos as instruções de acesso para o seu e-mail.",
+            )
+        return saveSession(dto)
+    }
 
     private fun saveSession(dto: LoginDto): AuthSession {
         val token = dto.token ?: throw ApiException("Login sem token")

@@ -9,6 +9,7 @@ const {
   errorMessage,
   loading,
   confirmationOpen,
+  confirmationMessage,
   register,
   goToLogin
 } = useRegistration()
@@ -21,7 +22,7 @@ useSeoMeta({ title: 'Criar conta' })
     <UModal
       v-model:open="confirmationOpen"
       title="Confirme seu e-mail"
-      description="Enviamos uma mensagem de confirmação para o e-mail informado. Confirme sua conta antes de entrar."
+      :description="confirmationMessage || 'Enviamos uma mensagem de confirmação para o e-mail informado. Confirme sua conta antes de entrar.'"
       :dismissible="false"
     >
       <template #footer>
