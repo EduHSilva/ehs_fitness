@@ -49,6 +49,7 @@ function cellLabel(cell: NonNullable<CalendarCell>) {
 onMounted(async () => {
   await Promise.all([loadContext(), load()])
 })
+definePageMeta({ key: route => route.fullPath })
 useSeoMeta({ title: 'Registros' })
 </script>
 
@@ -73,6 +74,7 @@ useSeoMeta({ title: 'Registros' })
         </div>
       </header>
 
+      <StudentSwitcher />
       <p
         v-if="studentName"
         class="student-context"

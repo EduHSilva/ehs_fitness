@@ -14,7 +14,8 @@
 
 - **Web** é a superfície de gestão. O aluno sem profissional cria e mantém os próprios
   treinos, agenda e dieta; o personal trainer e o nutricionista gerenciam os alunos
-  vinculados.
+  vinculados. Nas telas de plano e acompanhamento o profissional alterna o aluno
+  consultado por um seletor, com o próprio usuário selecionado por padrão.
 - **App Android** é um MVP de consulta para o aluno: exibe início, treinos, agenda,
   dieta e perfil. Não cria, edita nem exclui plano. A gestão acontece apenas no web.
 - O servidor não distingue o tipo de cliente. O modo somente leitura do app é regra de

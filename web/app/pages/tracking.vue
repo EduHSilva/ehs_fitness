@@ -21,6 +21,7 @@ const {
 onMounted(async () => {
   await Promise.all([loadContext(), load()])
 })
+definePageMeta({ key: route => route.fullPath })
 
 useSeoMeta({ title: 'Acompanhamento' })
 </script>
@@ -55,6 +56,7 @@ useSeoMeta({ title: 'Acompanhamento' })
         </div>
       </header>
 
+      <StudentSwitcher />
       <p
         v-if="studentName"
         class="student-context"

@@ -157,6 +157,7 @@ Regras para Vue/Nuxt:
 - O armazenamento local de token e usuário autenticado é permitido como persistência de sessão, não como fonte de dados de domínio.
 - A área profissional é identificada pelas roles `HEALTH_PERSONAL`/`HEALTH_NUTRITIONIST`. O aluno com profissional ativo no domínio deve ver o plano em modo somente leitura (sem botões de criar/editar/excluir, com aviso "Gerenciado por <profissional>"); o gate usa `GET /fitness/students/links` (feature `students/useManagedLinks.ts`) e não depende do 403.
 - Ao integrar o plano de um aluno, envie `student_id` (nunca `user_id`) e valide o papel no domínio: personal escreve treinos/agenda e nutricionista escreve dieta; ambos leem o plano completo.
+- O componente `StudentSwitcher` (agenda, treinos, dieta, acompanhamento e registros) alterna o aluno consultado pelo profissional; a opção "Eu mesmo" é o padrão e a seleção viaja na query (`studentId`, `domain`, `linkId`, `studentName`). As páginas usam `definePageMeta({ key: route => route.fullPath })` para recarregar ao trocar de aluno.
 - O web é a única superfície de gestão de plano; o app é consulta. Não mova criação/edição para o app.
 
 Comandos, executados em `web/`:

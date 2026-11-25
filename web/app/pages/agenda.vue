@@ -35,6 +35,7 @@ function dayName(day: number) {
 onMounted(async () => {
   await Promise.all([loadContext(), load()])
 })
+definePageMeta({ key: route => route.fullPath })
 useSeoMeta({ title: 'Agenda' })
 </script>
 
@@ -46,7 +47,7 @@ useSeoMeta({ title: 'Agenda' })
         <div><p>SUA ROTINA</p><h1>Agenda semanal</h1></div>
         <div class="topbar-actions">
           <NuxtLink
-            to="/workouts"
+            :to="{ path: '/workouts', query: $route.query }"
             class="secondary-button"
           >
             <UIcon name="i-lucide-dumbbell" /> Treinos
@@ -61,6 +62,7 @@ useSeoMeta({ title: 'Agenda' })
           </button>
         </div>
       </header>
+      <StudentSwitcher />
       <p
         v-if="studentName"
         class="student-context"

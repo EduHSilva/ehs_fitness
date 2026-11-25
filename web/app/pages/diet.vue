@@ -17,6 +17,7 @@ const deleteDescription = computed(() => pendingDelete.value
 onMounted(async () => {
   await Promise.all([loadContext(), loadMeals()])
 })
+definePageMeta({ key: route => route.fullPath })
 useSeoMeta({ title: 'Alimentação' })
 </script>
 
@@ -67,11 +68,19 @@ useSeoMeta({ title: 'Alimentação' })
           </button>
         </div>
       </header>
+      <StudentSwitcher />
       <p
         v-if="studentName"
         class="student-context"
       >
-        <UIcon name="i-lucide-user-round" /> Você está gerenciando a dieta de <b>{{ studentName }}</b>. <NuxtLink to="/diet">Voltar para minha alimentação</NuxtLink>
+        <UIcon name="i-lucide-user-round" />
+        <template v-if="readOnly">
+          Você está consultando a dieta de <b>{{ studentName }}</b>. Apenas o nutricionista do vínculo pode editar.
+        </template>
+        <template v-else>
+          Você está gerenciando a dieta de <b>{{ studentName }}</b>.
+        </template>
+        <NuxtLink to="/diet">Voltar para minha alimentação</NuxtLink>
       </p>
       <p
         v-if="studentName && readOnly"

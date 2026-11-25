@@ -59,6 +59,7 @@ const deleteDescription = computed(() => pendingDelete.value
 onMounted(async () => {
   await Promise.all([loadContext(), load()])
 })
+definePageMeta({ key: route => route.fullPath })
 useSeoMeta({ title: 'Treinos' })
 </script>
 
@@ -102,7 +103,7 @@ useSeoMeta({ title: 'Treinos' })
             <UIcon name="i-lucide-plus" /> Novo treino
           </button>
           <NuxtLink
-            to="/agenda"
+            :to="{ path: '/agenda', query: $route.query }"
             class="secondary-button"
           >
             <UIcon name="i-lucide-calendar-days" /> Agenda
@@ -117,6 +118,7 @@ useSeoMeta({ title: 'Treinos' })
           </button>
         </div>
       </header>
+      <StudentSwitcher />
       <p
         v-if="studentName"
         class="student-context"

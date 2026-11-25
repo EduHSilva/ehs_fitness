@@ -314,6 +314,13 @@ useSeoMeta({ title: 'Alunos' })
                 {{ canManage('PERSONAL') ? 'Treinos' : 'Ver treinos' }}
               </button>
               <button
+                :title="canManage('PERSONAL') ? 'Gerenciar agenda' : 'Consultar agenda'"
+                @click="manage(student, 'agenda')"
+              >
+                <UIcon name="i-lucide-calendar-days" />
+                {{ canManage('PERSONAL') ? 'Agenda' : 'Ver agenda' }}
+              </button>
+              <button
                 :title="canManage('NUTRITIONIST') ? 'Gerenciar dieta' : 'Consultar dieta'"
                 @click="manage(student, 'diet')"
               >
