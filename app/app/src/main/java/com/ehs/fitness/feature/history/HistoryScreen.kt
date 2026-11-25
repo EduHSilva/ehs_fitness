@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -182,12 +183,32 @@ private fun MonthToolbar(
 @Composable
 private fun StatsGrid(state: HistoryUiState) {
     val tiles = buildList {
-        add(StatTileData("dias com registro", state.stats.registeredDays.toString(), Icons.Filled.EventAvailable))
+        add(
+            StatTileData(
+                "dias com registro",
+                state.stats.registeredDays.toString(),
+                Icons.Filled.EventAvailable,
+            ),
+        )
         if (TrackingType.CREATINE in state.activeTypes) {
-            add(StatTileData("dias de creatina", state.stats.creatineDays.toString(), Icons.Filled.Medication))
+            add(
+                StatTileData(
+                    "dias de creatina",
+                    state.stats.creatineDays.toString(),
+                    Icons.Filled.Medication,
+                    tintFor(TrackingType.CREATINE),
+                ),
+            )
         }
         if (TrackingType.WORKOUT in state.activeTypes) {
-            add(StatTileData("dias de treino", state.stats.workoutDays.toString(), Icons.Filled.FitnessCenter))
+            add(
+                StatTileData(
+                    "dias de treino",
+                    state.stats.workoutDays.toString(),
+                    Icons.Filled.FitnessCenter,
+                    tintFor(TrackingType.WORKOUT),
+                ),
+            )
         }
         if (TrackingType.CARDIO in state.activeTypes) {
             add(
@@ -195,6 +216,7 @@ private fun StatsGrid(state: HistoryUiState) {
                     "${state.stats.cardioDays} ${if (state.stats.cardioDays == 1) "dia" else "dias"} de cardio",
                     TrackingHistory.formatMinutes(state.stats.cardioMinutes),
                     Icons.Filled.Favorite,
+                    tintFor(TrackingType.CARDIO),
                 ),
             )
         }
@@ -222,7 +244,7 @@ private fun StatTile(data: StatTileData, modifier: Modifier = Modifier) {
             Icon(
                 data.icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = data.tint ?: MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(15.dp),
             )
             Text(
@@ -273,6 +295,34 @@ private fun CalendarCard(
                 }
             }
             Spacer(Modifier.height(4.dp))
+        }
+        val legendTypes = TrackingHistory.activeTypes(config)
+        if (legendTypes.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                legendTypes.forEach { type ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            iconFor(type),
+                            contentDescription = null,
+                            tint = tintFor(type),
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Text(
+                            type.label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
         }
         if (monthLoading) {
             Row(
@@ -329,14 +379,22 @@ private fun DayCell(
             color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (types.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 types.forEach { type ->
-                    Icon(
-                        iconFor(type),
-                        contentDescription = type.label,
-                        tint = tintFor(type),
-                        modifier = Modifier.size(11.dp),
-                    )
+                    Box(
+                        Modifier
+                            .size(19.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(softFor(type)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            iconFor(type),
+                            contentDescription = type.label,
+                            tint = tintFor(type),
+                            modifier = Modifier.size(13.dp),
+                        )
+                    }
                 }
             }
         }
@@ -360,9 +418,21 @@ private fun iconFor(type: TrackingType): ImageVector = when (type) {
 
 @Composable
 private fun tintFor(type: TrackingType): Color = when (type) {
-    TrackingType.CREATINE -> MaterialTheme.colorScheme.primary
-    TrackingType.WORKOUT -> FitnessTheme.colors.secondary
+    TrackingType.CREATINE -> FitnessTheme.colors.warning
+    TrackingType.WORKOUT -> MaterialTheme.colorScheme.primary
     TrackingType.CARDIO -> FitnessTheme.colors.success
 }
 
-private data class StatTileData(val label: String, val value: String, val icon: ImageVector)
+@Composable
+private fun softFor(type: TrackingType): Color = when (type) {
+    TrackingType.CREATINE -> FitnessTheme.colors.warningSoft
+    TrackingType.WORKOUT -> FitnessTheme.colors.primarySoft
+    TrackingType.CARDIO -> FitnessTheme.colors.successSoft
+}
+
+private data class StatTileData(
+    val label: String,
+    val value: String,
+    val icon: ImageVector,
+    val tint: Color? = null,
+)

@@ -226,12 +226,22 @@ useSeoMeta({ title: 'Registros' })
                     v-for="type in typesFor(cell.date)"
                     :key="type"
                     :class="type"
+                    :title="TYPE_LABELS[type]"
                   >
                     <UIcon :name="TYPE_ICONS[type]" />
                   </span>
                 </div>
               </template>
             </div>
+          </div>
+          <div
+            v-if="types.length"
+            class="history-legend"
+          >
+            <span
+              v-for="type in types"
+              :key="type"
+            ><i :class="type"><UIcon :name="TYPE_ICONS[type]" /></i>{{ TYPE_LABELS[type] }}</span>
           </div>
           <p
             v-if="monthLoading"
