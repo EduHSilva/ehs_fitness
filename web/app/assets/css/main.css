@@ -894,7 +894,14 @@ input[type=checkbox], input[type=radio] { accent-color: var(--color-primary); }
 .food-results > button > span { display: grid; gap: 2px; }
 .food-results > button b { color: var(--color-text); font-size: 13px; }
 .food-results > button small { color: var(--color-muted); font-size: 11px; }
+.food-results > button .food-portion { color: var(--color-subtle); }
 .selected-list .nutrition-note { margin: 8px 0 0; color: var(--color-muted); font-size: 12px; font-weight: 600; }
+.selected-list .portion-shortcuts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.selected-list .portion-shortcuts > span { color: var(--color-subtle); font-size: 11px; font-weight: 600; }
+.selected-list .portion-shortcuts button { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid var(--color-border); border-radius: 999px; color: var(--color-muted); background: var(--color-surface); font-size: 11px; font-weight: 600; cursor: pointer; }
+.selected-list .portion-shortcuts button small { color: var(--color-subtle); font-size: 10px; font-weight: 500; }
+.selected-list .portion-shortcuts button:hover, .selected-list .portion-shortcuts button.active { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-soft); }
+.selected-list .portion-shortcuts button.active small { color: inherit; }
 
 .meal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
 .meal-card, .workout-list-card { border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface); box-shadow: var(--shadow-card); }
@@ -988,17 +995,17 @@ input[type=checkbox], input[type=radio] { accent-color: var(--color-primary); }
 .history-day.today { border-color: var(--color-primary); box-shadow: inset 0 0 0 1px var(--color-primary); }
 .history-day-index { color: var(--color-muted); font-size: 11px; font-weight: 700; }
 .history-day.today .history-day-index { color: var(--color-primary); }
-.history-day-icons { display: flex; flex-wrap: wrap; gap: 4px; }
-.history-day-icons span { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 7px; color: var(--color-primary); background: var(--color-primary-soft); }
-.history-day-icons span.creatine { color: var(--color-warning); background: var(--color-warning-soft); }
-.history-day-icons span.cardio { color: var(--color-success); background: var(--color-success-soft); }
-.history-day-icons svg { width: 15px; height: 15px; }
+.history-day-icons { display: flex; flex-wrap: wrap; gap: 1px; }
+.history-day-icons > span { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; color: var(--color-primary); background: var(--color-primary-soft); }
+.history-day-icons > span.creatine { color: var(--color-warning); background: var(--color-warning-soft); }
+.history-day-icons > span.cardio { color: var(--color-success); background: var(--color-success-soft); }
+.history-day-icons > span > .iconify, .history-day-icons svg { width: 14px; height: 14px; }
 .history-legend { display: flex; flex-wrap: wrap; gap: 9px 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border); }
-.history-legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 11px; font-weight: 600; }
-.history-legend i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; color: var(--color-primary); background: var(--color-primary-soft); }
+.history-legend > span { display: inline-flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 11px; font-weight: 600; }
+.history-legend i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 7px; color: var(--color-primary); background: var(--color-primary-soft); }
 .history-legend i.creatine { color: var(--color-warning); background: var(--color-warning-soft); }
 .history-legend i.cardio { color: var(--color-success); background: var(--color-success-soft); }
-.history-legend svg { width: 13px; height: 13px; }
+.history-legend i .iconify, .history-legend svg { width: 13px; height: 13px; }
 .history-empty { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 14px 0 0; color: var(--color-muted); font-size: 12px; }
 .history-empty svg { width: 15px; height: 15px; }
 
@@ -1164,8 +1171,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--color-primary); }
   .registration-card { padding: 18px; }
   .history-card { padding: 12px; }
   .history-day { min-height: 56px; padding: 5px 6px; }
-  .history-day-icons span { width: 19px; height: 19px; }
-  .history-day-icons svg { width: 12px; height: 12px; }
+  .history-day-icons > span { width: 17px; height: 17px; }
+  .history-day-icons > span > .iconify, .history-day-icons svg { width: 11px; height: 11px; }
   .history-legend { gap: 7px 12px; }
   .history-stat strong { font-size: 20px; }
 }

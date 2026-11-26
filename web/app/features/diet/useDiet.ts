@@ -1,6 +1,7 @@
 import { errorMessage } from '~/types/api'
 import { createMeal, deleteMeal, fetchMeals, searchFoods, updateMeal } from './diet.api'
 import { dayMacros as buildDayMacros, dayTotal as buildDayTotal, foodMacros, hasMacros, mealMacros } from './macros'
+import { portionHint, portionShortcuts } from './portions'
 import type { Food, Meal, MealFood, MealFoodResponse } from './types'
 
 export function useDiet(studentId: Ref<string>, canManage: Ref<boolean>) {
@@ -72,7 +73,9 @@ export function useDiet(studentId: Ref<string>, canManage: Ref<boolean>) {
       protein: food.protein,
       carbs: food.carbs,
       fat: food.fat,
-      fiber: food.fiber
+      fiber: food.fiber,
+      portion_label: food.portion_label,
+      portion_grams: food.portion_grams
     })
     foodQuery.value = ''
     foods.value = []
@@ -121,7 +124,9 @@ export function useDiet(studentId: Ref<string>, canManage: Ref<boolean>) {
       protein: food.protein,
       carbs: food.carbs,
       fat: food.fat,
-      fiber: food.fiber
+      fiber: food.fiber,
+      portion_label: food.portion_label,
+      portion_grams: food.portion_grams
     }))
     showForm.value = true
     formError.value = ''
@@ -210,6 +215,8 @@ export function useDiet(studentId: Ref<string>, canManage: Ref<boolean>) {
     mealMacros,
     dayMacros,
     dayCalories,
-    hasMacros
+    hasMacros,
+    portionHint,
+    portionShortcuts
   }
 }

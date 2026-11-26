@@ -118,7 +118,15 @@
 
 - Refeição: nome (único por aluno), horário e pelo menos um alimento.
 - Alimento: referência ao catálogo (valores por 100 g), quantidade e observação. O campo
-  correto é `observation` (não `obs`). O catálogo global é a TACO (597 itens).
+  correto é `observation` (não `obs`). O catálogo global é a TACO (597 itens) mais um
+  complemento curado de suplementos e industrializados comuns (whey, barras, bebidas
+  vegetais etc.), com valores médios de rótulo; o seed sincroniza por `code` (upsert) a
+  cada boot. Alimentos específicos de marca ficam para a futura biblioteca do usuário.
+- A quantidade da refeição é sempre em gramas. Quando conhecida, o catálogo traz uma
+  medida caseira de referência (`portion_label` + `portion_grams`, ex.: 1 ovo ≈ 50 g,
+  1 fatia de pão ≈ 25 g); o web usa isso como atalho de preenchimento e exibe o
+  equivalente, mas o payload continua enviando gramas. As porções são estimativas e não
+  substituem a pesagem.
 - A resposta de refeição expõe `food_id`, `food_name` e os macros por 100 g
   (`calories`, `protein`, `carbs`, `fat`, `fiber`) para exibição; os clientes escalam
   pelos gramas e podem somar o total da refeição.

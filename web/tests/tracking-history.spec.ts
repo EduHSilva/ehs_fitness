@@ -5,6 +5,7 @@ import {
   buildMonthGrid,
   dayTypes,
   formatMinutes,
+  historyList,
   monthLabel,
   monthRange,
   monthStats,
@@ -107,5 +108,14 @@ describe('tipos e estatísticas', () => {
     expect(formatMinutes(60)).toBe('1h')
     expect(formatMinutes(75)).toBe('1h15')
     expect(formatMinutes(120)).toBe('2h')
+  })
+
+  it('normaliza lista, registro único e resposta vazia', () => {
+    const single = day('2026-11-25', { creatine: true })
+    expect(historyList([days[0], days[1]])).toEqual([days[0], days[1]])
+    expect(historyList(single)).toEqual([single])
+    expect(historyList(null)).toEqual([])
+    expect(historyList(undefined)).toEqual([])
+    expect(historyList([{ ...single, eventDate: '' }])).toEqual([])
   })
 })

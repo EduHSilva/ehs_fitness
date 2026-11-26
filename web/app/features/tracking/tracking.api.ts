@@ -15,7 +15,8 @@ export function fetchTrackingHistory(
 ) {
   const params = new URLSearchParams({ from: input.from, to: input.to })
   if (input.studentId) params.set('student_id', input.studentId)
-  return request<ApiResponse<TrackingDay[]>>(`/fitness/config/history?${params.toString()}`)
+  // O backend anterior ignorava from/to e respondia um único registro do dia.
+  return request<ApiResponse<TrackingDay[] | TrackingDay>>(`/fitness/config/history?${params.toString()}`)
 }
 
 export function saveTrackingConfig(request: ApiRequest, input: TrackingInput, studentId?: string) {

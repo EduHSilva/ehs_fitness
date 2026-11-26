@@ -4,7 +4,7 @@ import { useStudentContext } from '~/features/students/useStudentContext'
 
 const { studentId, studentName, canManageDiet, managerName, loadContext } = useStudentContext()
 const diet = useDiet(studentId, canManageDiet)
-const { meals, foods, loading, saving, searching, error: errorMessage, actionError, formError, showForm, editingId, mealName, mealHour, foodQuery, selectedFoods, pendingDelete, deleting, readOnly, load: loadMeals, addFood, removeFood, cancelForm, startEdit, save: saveMeal, requestDelete, cancelDelete, confirmDelete, foodMacros, mealMacros, dayMacros, dayCalories, hasMacros } = diet
+const { meals, foods, loading, saving, searching, error: errorMessage, actionError, formError, showForm, editingId, mealName, mealHour, foodQuery, selectedFoods, pendingDelete, deleting, readOnly, load: loadMeals, addFood, removeFood, cancelForm, startEdit, save: saveMeal, requestDelete, cancelDelete, confirmDelete, foodMacros, mealMacros, dayMacros, dayCalories, hasMacros, portionHint, portionShortcuts } = diet
 
 const deleteOpen = computed({
   get: () => Boolean(pendingDelete.value),
@@ -149,6 +149,10 @@ useSeoMeta({ title: 'Alimentação' })
             <span>
               <b>{{ food.name }}</b>
               <small v-if="hasMacros(food)">{{ foodMacros(food, 100) }} (por 100 g)</small>
+              <small
+                v-if="portionHint(food)"
+                class="food-portion"
+              >{{ portionHint(food) }}</small>
             </span><UIcon name="i-lucide-plus" />
           </button><p v-if="!searching && !foods.length">
             Nenhum alimento encontrado.
@@ -177,6 +181,20 @@ useSeoMeta({ title: 'Alimentação' })
                 v-model="food.observation"
                 placeholder="Ex.: cozido"
               ></label>
+            </div><div
+              v-if="portionShortcuts(food).length"
+              class="portion-shortcuts"
+            >
+              <span>Porção:</span>
+              <button
+                v-for="shortcut in portionShortcuts(food)"
+                :key="shortcut.count"
+                type="button"
+                :class="{ active: food.quantity === shortcut.grams }"
+                @click="food.quantity = shortcut.grams"
+              >
+                {{ shortcut.label }}<small>{{ shortcut.grams }} g</small>
+              </button>
             </div><p
               v-if="hasMacros(food)"
               class="nutrition-note"

@@ -125,6 +125,12 @@ export function dayTypes(day: TrackingDay | undefined, config: TrackingConfig | 
   return types
 }
 
+/** Aceita lista, registro único (backend antigo) ou vazio e devolve sempre a lista. */
+export function historyList(payload: TrackingDay[] | TrackingDay | null | undefined): TrackingDay[] {
+  const list = Array.isArray(payload) ? payload : payload ? [payload] : []
+  return list.filter(day => typeof day?.eventDate === 'string' && day.eventDate.length > 0)
+}
+
 export function monthStats(days: TrackingDay[], config: TrackingConfig | null): TrackingStats {
   const active = new Set(activeTypes(config))
   const stats: TrackingStats = {

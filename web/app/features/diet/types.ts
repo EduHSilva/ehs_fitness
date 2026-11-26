@@ -5,9 +5,13 @@ export type Macros = {
   fat?: number
   fiber?: number
 }
-export type Food = Macros & { id: number, name: string }
-export type MealFood = Macros & { food_id: number, name: string, quantity: number, observation: string }
-export type MealFoodResponse = Macros & {
+export type Portion = {
+  portion_label?: string
+  portion_grams?: number
+}
+export type Food = Macros & Portion & { id: number, name: string }
+export type MealFood = Macros & Portion & { food_id: number, name: string, quantity: number, observation: string }
+export type MealFoodResponse = Macros & Portion & {
   tag_id?: number
   food_id?: number
   food_name?: string

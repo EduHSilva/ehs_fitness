@@ -105,8 +105,11 @@ O app contorna o que dá e o restante está registrado no TODO do backend:
 - `GET /fitness/workouts` e `GET /fitness/diet/meals` devolvem `data: []` quando vazios
   (os clientes também tratam `null` como lista vazia). A refeição traz
   `food_id`/`food_name` e os macros por 100 g (`calories`, `protein`, `carbs`, `fat`,
-  `fiber`); a edição remonta o formulário a partir desse `GET`. O catálogo de alimentos
-  global é a TACO (597 itens).
+  `fiber`); a edição remonta o formulário a partir desse `GET`. O catálogo global é a
+  TACO (597 itens) mais um complemento curado de suplementos/industrializados (whey,
+  barras, bebidas vegetais etc.), sincronizado por `code` no boot. A busca e a refeição
+  também trazem `portion_label`/`portion_grams` (medida caseira de referência, ex.:
+  fatia = 25 g); a quantidade continua em gramas e o web usa a porção só como atalho.
 - `GET /fitness/workout?id=` e `GET /fitness/diet/meal?id=` respondem 404 para id
   inexistente.
 - Existe vínculo aluno ↔ profissional com convites por e-mail (`/fitness/students`):

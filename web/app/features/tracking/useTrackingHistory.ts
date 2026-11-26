@@ -6,6 +6,7 @@ import {
   availableFilters,
   buildMonthGrid,
   currentMonthCursor,
+  historyList,
   monthLabel,
   monthRange,
   monthStats,
@@ -57,7 +58,7 @@ export function useTrackingHistory(studentId: Ref<string>) {
         studentId: studentId.value || undefined
       })
       if (current !== requestId) return
-      days.value = response.data ?? []
+      days.value = historyList(response.data)
     } catch (cause) {
       if (current !== requestId) return
       days.value = []
