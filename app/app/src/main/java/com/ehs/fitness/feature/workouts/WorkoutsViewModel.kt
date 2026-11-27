@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ehs.fitness.core.network.userMessage
 import com.ehs.fitness.data.model.Workout
+import com.ehs.fitness.data.repository.LoadOverrideRepository
 import com.ehs.fitness.data.repository.StudentRepository
 import com.ehs.fitness.data.repository.TrainingSessionRepository
 import com.ehs.fitness.data.repository.WorkoutRepository
 import com.ehs.fitness.domain.students.ManagedPlan
+import com.ehs.fitness.domain.workouts.TrainingLoads
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +31,7 @@ class WorkoutsViewModel(
     private val repository: WorkoutRepository,
     private val training: TrainingSessionRepository,
     private val students: StudentRepository,
+    private val loadOverrides: LoadOverrideRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(WorkoutsUiState())
     val state: StateFlow<WorkoutsUiState> = _state.asStateFlow()
@@ -43,7 +46,7 @@ class WorkoutsViewModel(
             else _state.update { it.copy(refreshing = true) }
             val managedBy = personalManager()
             try {
-                val workouts = repository.workouts()
+                val workouts = TrainingLoads.apply(repository.workouts(), loadOverrides.overrides())
                 val activeWorkoutId = training.load()?.takeIf { !it.isFinished }?.workoutId
                 _state.update {
                     it.copy(
@@ -86,6 +89,11 @@ class WorkoutsViewModel(
 
     fun refreshTrainingState() {
         val activeWorkoutId = training.load()?.takeIf { !it.isFinished }?.workoutId
-        _state.update { it.copy(activeWorkoutId = activeWorkoutId) }
+        _state.update {
+            it.copy(
+                activeWorkoutId = activeWorkoutId,
+                workouts = TrainingLoads.apply(it.workouts, loadOverrides.overrides()),
+            )
+        }
     }
 }

@@ -71,6 +71,21 @@ class TrackingHistoryTest {
     }
 
     @Test
+    fun `media de cardio usa os dias com cardio`() {
+        val days = listOf(
+            day("2026-11-02", cardio = 20.0),
+            day("2026-11-03", cardio = 45.0),
+            day("2026-11-04"),
+        )
+        val stats = TrackingHistory.stats(days, config, YearMonth.of(2026, 11))
+
+        assertEquals(2, stats.cardioDays)
+        assertEquals(65.0, stats.cardioMinutes, 0.0)
+        assertEquals(32.5, stats.cardioAverage, 0.0)
+        assertEquals(0.0, TrackingStats().cardioAverage, 0.0)
+    }
+
+    @Test
     fun `calendario comeca no domingo e completa as semanas`() {
         val april = TrackingHistory.monthDays(YearMonth.of(2026, 4))
         assertEquals(35, april.size)

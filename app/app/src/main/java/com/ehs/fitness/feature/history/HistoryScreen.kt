@@ -211,12 +211,19 @@ private fun StatsGrid(state: HistoryUiState) {
             )
         }
         if (TrackingType.CARDIO in state.activeTypes) {
+            val days = state.stats.cardioDays
             add(
                 StatTileData(
-                    "${state.stats.cardioDays} ${if (state.stats.cardioDays == 1) "dia" else "dias"} de cardio",
+                    "cardio no mês",
                     TrackingHistory.formatMinutes(state.stats.cardioMinutes),
                     Icons.Filled.Favorite,
                     tintFor(TrackingType.CARDIO),
+                    hint = if (days > 0) {
+                        "$days ${if (days == 1) "dia" else "dias"} · média " +
+                            "${TrackingHistory.formatMinutes(state.stats.cardioAverage)}/dia"
+                    } else {
+                        "sem registros no mês"
+                    },
                 ),
             )
         }
@@ -258,6 +265,13 @@ private fun StatTile(data: StatTileData, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
+        if (data.hint != null) {
+            Text(
+                data.hint,
+                style = MaterialTheme.typography.labelSmall,
+                color = FitnessTheme.colors.subtle,
+            )
+        }
     }
 }
 
@@ -286,9 +300,12 @@ private fun CalendarCard(
         TrackingHistory.monthDays(month).chunked(7).forEach { week ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 week.forEach { date ->
+                    val record = date?.let(records::get)
+                    val types = filteredTypes(record, config, filter)
                     DayCell(
                         date = date,
-                        types = filteredTypes(date?.let(records::get), config, filter),
+                        types = types,
+                        cardioMinutes = if (record != null && TrackingType.CARDIO in types) record.cardio else 0.0,
                         isToday = date == LocalDate.now(),
                         modifier = Modifier.weight(1f),
                     )
@@ -356,17 +373,18 @@ private fun CalendarCard(
 private fun DayCell(
     date: LocalDate?,
     types: Set<TrackingType>,
+    cardioMinutes: Double,
     isToday: Boolean,
     modifier: Modifier = Modifier,
 ) {
     if (date == null) {
-        Spacer(modifier.height(56.dp))
+        Spacer(modifier.height(64.dp))
         return
     }
     val border = if (isToday) MaterialTheme.colorScheme.primary else FitnessTheme.colors.border
     Column(
         modifier
-            .height(56.dp)
+            .height(64.dp)
             .clip(RoundedCornerShape(9.dp))
             .background(if (isToday) FitnessTheme.colors.primarySoft else MaterialTheme.colorScheme.background)
             .border(1.dp, border, RoundedCornerShape(9.dp))
@@ -397,6 +415,14 @@ private fun DayCell(
                     }
                 }
             }
+        }
+        if (cardioMinutes > 0.0) {
+            Text(
+                TrackingHistory.formatMinutes(cardioMinutes),
+                style = MaterialTheme.typography.labelSmall,
+                color = FitnessTheme.colors.success,
+                maxLines = 1,
+            )
         }
     }
 }
@@ -435,4 +461,5 @@ private data class StatTileData(
     val value: String,
     val icon: ImageVector,
     val tint: Color? = null,
+    val hint: String? = null,
 )

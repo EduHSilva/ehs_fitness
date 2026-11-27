@@ -88,14 +88,6 @@ class HomeViewModel(
         register(_state.value.trackingToday.copy(creatine = value))
     }
 
-    fun setTrained(value: Boolean) {
-        register(_state.value.trackingToday.copy(trained = value))
-    }
-
-    fun setCardio(minutes: Double) {
-        register(_state.value.trackingToday.copy(cardio = minutes.coerceIn(0.0, 600.0)))
-    }
-
     private fun register(next: DailyTracking) {
         if (_state.value.trackingSaving) return
         viewModelScope.launch {

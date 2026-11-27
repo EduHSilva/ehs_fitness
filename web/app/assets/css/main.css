@@ -1000,6 +1000,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--color-primary); }
 .history-day-icons > span.creatine { color: var(--color-warning); background: var(--color-warning-soft); }
 .history-day-icons > span.cardio { color: var(--color-success); background: var(--color-success-soft); }
 .history-day-icons > span > .iconify, .history-day-icons svg { width: 14px; height: 14px; }
+.history-day-cardio { margin-top: auto; color: var(--color-success); font-size: 10px; font-weight: 700; line-height: 1; }
 .history-legend { display: flex; flex-wrap: wrap; gap: 9px 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--color-border); }
 .history-legend > span { display: inline-flex; align-items: center; gap: 6px; color: var(--color-muted); font-size: 11px; font-weight: 600; }
 .history-legend i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 7px; color: var(--color-primary); background: var(--color-primary-soft); }

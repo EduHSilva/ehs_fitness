@@ -91,7 +91,8 @@ describe('tipos e estatísticas', () => {
       creatineDays: 2,
       workoutDays: 2,
       cardioDays: 2,
-      cardioMinutes: 65.5
+      cardioMinutes: 65.5,
+      cardioAverage: 32.75
     })
     expect(monthStats(days, { showCreatine: false, showWorkout: false, dailyCardio: 0 }))
       .toEqual({
@@ -99,7 +100,8 @@ describe('tipos e estatísticas', () => {
         creatineDays: 0,
         workoutDays: 0,
         cardioDays: 0,
-        cardioMinutes: 0
+        cardioMinutes: 0,
+        cardioAverage: 0
       })
   })
 

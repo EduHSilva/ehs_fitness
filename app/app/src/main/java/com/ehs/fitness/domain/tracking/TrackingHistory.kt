@@ -18,7 +18,11 @@ data class TrackingStats(
     val workoutDays: Int = 0,
     val cardioDays: Int = 0,
     val cardioMinutes: Double = 0.0,
-)
+) {
+    /** Média de minutos por dia com cardio (0 quando não houve cardio). */
+    val cardioAverage: Double
+        get() = if (cardioDays > 0) cardioMinutes / cardioDays else 0.0
+}
 
 /** Regras puras do calendário mensal de acompanhamento. */
 object TrackingHistory {

@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ehs.fitness.core.device.RestVibrator
 import com.ehs.fitness.core.network.userMessage
+import com.ehs.fitness.data.repository.LoadOverrideRepository
 import com.ehs.fitness.data.repository.TrackingRepository
 import com.ehs.fitness.data.repository.TrainingSessionRepository
 import com.ehs.fitness.data.repository.WorkoutRepository
+import com.ehs.fitness.domain.workouts.TrainingLoads
 import com.ehs.fitness.domain.workouts.TrainingSession
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -35,6 +37,7 @@ class TrainingViewModel(
     private val workouts: WorkoutRepository,
     private val sessions: TrainingSessionRepository,
     private val tracking: TrackingRepository,
+    private val loadOverrides: LoadOverrideRepository,
     private val restVibrator: RestVibrator,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TrainingUiState())
@@ -60,7 +63,8 @@ class TrainingViewModel(
             try {
                 val workout = workouts.workouts().firstOrNull { it.id == workoutId }
                     ?: throw IllegalStateException("Treino não encontrado.")
-                val session = TrainingSession.start(workout, now)
+                val withStudentLoads = TrainingLoads.apply(workout, loadOverrides.overrides())
+                val session = TrainingSession.start(withStudentLoads, now)
                     ?: throw IllegalStateException("Este treino não tem exercícios.")
                 sessions.save(session)
                 publish(session)
@@ -87,7 +91,7 @@ class TrainingViewModel(
         val next = session.completeSeries(System.currentTimeMillis())
         sessions.save(next)
         publish(next)
-        if (next.isFinished && !session.isFinished) markWorkoutTrained()
+        if (next.isFinished && !session.isFinished) markWorkoutTrained(next)
     }
 
     fun selectExercise(index: Int) {
@@ -105,7 +109,11 @@ class TrainingViewModel(
         publish(next)
     }
 
-    /** Ajusta a carga localmente e tenta gravar no plano quando há conexão. */
+    /**
+     * Ajusta a carga: fica salva no aparelho na hora e, quando a API aceita,
+     * também é gravada no plano. Com profissional ativo (403) o ajuste local
+     * continua valendo nas próximas execuções.
+     */
     fun updateLoad(load: Double) {
         val session = _state.value.session ?: return
         val exercise = session.currentExercise ?: return
@@ -113,11 +121,14 @@ class TrainingViewModel(
         val safe = load.coerceIn(0.0, 1000.0)
         val updated = session.updateLoad(safe, System.currentTimeMillis())
         sessions.save(updated)
+        loadOverrides.save(exercise.exerciseId, safe)
         _state.update { it.copy(loadSaving = true, loadError = null) }
         publish(updated)
         viewModelScope.launch {
             try {
                 workouts.updateLoad(session.workoutId, exercise.exerciseId, safe)
+                // O plano já tem a carga; o override local deixa de ser necessário.
+                loadOverrides.remove(exercise.exerciseId)
                 _state.update { it.copy(loadSaving = false) }
             } catch (e: CancellationException) {
                 throw e
@@ -129,19 +140,25 @@ class TrainingViewModel(
 
     private fun loadSyncMessage(cause: Exception): String = when {
         cause is HttpException && cause.code() == 403 ->
-            "Seu profissional gerencia o treino; a carga vale apenas nesta execução."
-        cause is IOException -> "Sem conexão; a carga vale apenas nesta execução."
-        else -> "Não foi possível atualizar o plano; a carga vale apenas nesta execução."
+            "Carga salva no seu app; o plano do profissional continua valendo no web."
+        cause is IOException -> "Sem conexão; a carga ficou salva no seu app."
+        else -> "Não foi possível atualizar o plano; a carga ficou salva no seu app."
     }
 
-    /** Marca o hábito "treino" do dia quando a execução termina; falha vira aviso na tela final. */
-    private fun markWorkoutTrained() {
+    /**
+     * Marca o hábito "treino" e soma os minutos de cardio concluídos quando a
+     * execução termina; falha vira aviso na tela final.
+     */
+    private fun markWorkoutTrained(completed: TrainingSession) {
         if (_state.value.trackingSaved || _state.value.trackingSaving) return
         _state.update { it.copy(trackingSaving = true, trackingError = null) }
         viewModelScope.launch {
             try {
                 val today = tracking.today()
-                if (!today.trained) tracking.register(today.copy(trained = true))
+                val cardio = completed.completedCardioMinutes
+                if (!today.trained || cardio > 0.0) {
+                    tracking.register(today.copy(trained = true, cardio = today.cardio + cardio))
+                }
                 _state.update { it.copy(trackingSaving = false, trackingSaved = true) }
             } catch (e: CancellationException) {
                 throw e

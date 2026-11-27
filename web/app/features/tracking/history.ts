@@ -21,6 +21,8 @@ export type TrackingStats = {
   workoutDays: number
   cardioDays: number
   cardioMinutes: number
+  /** Média de minutos por dia com cardio (0 quando não houve cardio). */
+  cardioAverage: number
 }
 
 export const TYPE_ICONS: Record<TrackingType, string> = {
@@ -138,7 +140,8 @@ export function monthStats(days: TrackingDay[], config: TrackingConfig | null): 
     creatineDays: 0,
     workoutDays: 0,
     cardioDays: 0,
-    cardioMinutes: 0
+    cardioMinutes: 0,
+    cardioAverage: 0
   }
   for (const day of days) {
     const creatine = active.has('creatine') && day.creatine
@@ -152,6 +155,7 @@ export function monthStats(days: TrackingDay[], config: TrackingConfig | null): 
     }
     if (creatine || workout || cardio) stats.registeredDays++
   }
+  stats.cardioAverage = stats.cardioDays ? stats.cardioMinutes / stats.cardioDays : 0
   return stats
 }
 

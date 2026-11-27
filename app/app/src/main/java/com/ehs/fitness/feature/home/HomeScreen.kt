@@ -15,10 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Restaurant
@@ -27,20 +27,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -155,8 +150,6 @@ fun HomeScreen(
                         saving = state.trackingSaving,
                         error = state.trackingError,
                         onCreatine = vm::setCreatine,
-                        onTrained = vm::setTrained,
-                        onCardio = vm::setCardio,
                         onOpenHistory = onOpenHistory,
                     )
                 }
@@ -442,8 +435,6 @@ private fun DailyTrackingCard(
     saving: Boolean,
     error: String?,
     onCreatine: (Boolean) -> Unit,
-    onTrained: (Boolean) -> Unit,
-    onCardio: (Double) -> Unit,
     onOpenHistory: () -> Unit,
 ) {
     ContentCard {
@@ -466,7 +457,7 @@ private fun DailyTrackingCard(
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            "Solicitado pelo seu profissional no web.",
+            trackingHint(config),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -484,12 +475,10 @@ private fun DailyTrackingCard(
 
         if (config.showWorkout) {
             if (config.showCreatine) TrackingSectionDivider() else Spacer(Modifier.height(12.dp))
-            TrackingSwitchRow(
+            TrackingStatusRow(
                 title = "Treino",
-                status = if (today.trained) "Registrado hoje" else "Ainda não registrado",
-                checked = today.trained,
-                enabled = !saving,
-                onCheckedChange = onTrained,
+                status = if (today.trained) "Registrado hoje" else "Aguardando a conclusão de um treino",
+                done = today.trained,
             )
         }
 
@@ -512,16 +501,21 @@ private fun DailyTrackingCard(
                     )
                 }
                 Icon(
-                    Icons.Filled.Favorite,
+                    if (today.cardio > 0.0) Icons.Filled.CheckCircle else Icons.Filled.Favorite,
                     contentDescription = null,
-                    tint = FitnessTheme.colors.secondary,
+                    tint = if (today.cardio > 0.0) FitnessTheme.colors.success else FitnessTheme.colors.secondary,
                     modifier = Modifier.size(18.dp),
                 )
             }
             Spacer(Modifier.height(8.dp))
             ProgressBar(fraction = (today.cardio / config.dailyCardio).toFloat())
-            Spacer(Modifier.height(12.dp))
-            CardioForm(saving = saving, onSave = onCardio)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (today.cardio > 0.0) "Cardio registrado ao concluir o treino."
+                else "Registrado ao concluir um treino com cardio.",
+                style = MaterialTheme.typography.labelSmall,
+                color = FitnessTheme.colors.subtle,
+            )
         }
 
         if (error != null) {
@@ -559,11 +553,43 @@ private fun TrackingSwitchRow(
     }
 }
 
+/** Status somente leitura: treino e cardio entram sozinhos ao concluir um treino. */
+@Composable
+private fun TrackingStatusRow(title: String, status: String, done: Boolean) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(
+                status,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (done) FitnessTheme.colors.success else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            if (done) Icons.Filled.CheckCircle else Icons.Filled.Schedule,
+            contentDescription = null,
+            tint = if (done) FitnessTheme.colors.success else FitnessTheme.colors.subtle,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
 @Composable
 private fun TrackingSectionDivider() {
     Spacer(Modifier.height(10.dp))
     ScreenDivider()
     Spacer(Modifier.height(12.dp))
+}
+
+private fun trackingHint(config: TrackingConfig): String = when {
+    config.showWorkout && config.cardioEnabled ->
+        "Treino e cardio são registrados ao concluir um treino."
+    config.showWorkout -> "O treino é registrado ao concluir um treino."
+    config.cardioEnabled -> "O cardio é registrado ao concluir um treino com cardio."
+    else -> "Solicitado pelo seu profissional no web."
 }
 
 private fun trackingTitle(config: TrackingConfig): String {
@@ -576,34 +602,6 @@ private fun trackingTitle(config: TrackingConfig): String {
         0, 1 -> labels.firstOrNull().orEmpty()
         2 -> "${labels[0]} e ${labels[1]}"
         else -> labels.dropLast(1).joinToString(", ") + " e " + labels.last()
-    }
-}
-
-@Composable
-private fun CardioForm(saving: Boolean, onSave: (Double) -> Unit) {
-    var minutes by remember { mutableStateOf("") }
-    Row(
-        Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        OutlinedTextField(
-            value = minutes,
-            onValueChange = { value -> minutes = value.filter(Char::isDigit).take(3) },
-            label = { Text("Minutos hoje") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            shape = RoundedCornerShape(9.dp),
-            modifier = Modifier.weight(1f),
-        )
-        Button(
-            onClick = { minutes.toDoubleOrNull()?.let(onSave) },
-            enabled = !saving && minutes.isNotBlank(),
-            shape = RoundedCornerShape(9.dp),
-            modifier = Modifier.height(54.dp),
-        ) {
-            Text("Registrar")
-        }
     }
 }
 

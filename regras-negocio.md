@@ -109,10 +109,12 @@
   repetições; a execução no app mostra uma etapa única por tempo em vez de séries.
 - Não há status/ciclo de vida do treino. Padrão da interface: 3 séries × 12 repetições.
 - Só o aluno autorizado ou o profissional do domínio edita/exclui.
-- Durante a execução no app, a carga do exercício atual pode ser ajustada e gravada no
-  plano (`PUT /fitness/workout/load`, `workout_id` + `exercise_id` + `load`) quando houver
-  conexão. A regra de escrita do plano vale: aluno com profissional ativo recebe `403` e o
-  ajuste fica só na execução local.
+- Durante a execução no app, a carga do exercício atual pode ser ajustada. O ajuste é
+  salvo no aparelho por conta e exercício e vale para as próximas execuções. Quando
+  houver conexão e a regra de escrita do plano permitir, ele também é gravado no plano
+  (`PUT /fitness/workout/load`, `workout_id` + `exercise_id` + `load`) e o ajuste local é
+  dispensado. Aluno com profissional ativo recebe `403`: nesse caso (ou sem conexão) a
+  carga continua valendo apenas no app, com aviso na tela.
 
 ## Dieta
 
@@ -140,8 +142,10 @@
   por aluno (upsert). Sem parâmetros, a consulta devolve apenas **hoje** (404 se não
   houver registro); com `from`/`to` (YYYY-MM-DD, inclusive, máximo 366 dias) devolve a
   lista ordenada por data.
-- O treino diário registra apenas que o aluno treinou naquele dia; quando existir o
-  registro real da execução, esse campo pode ser derivado dela.
+- O app preenche treino e cardio ao concluir uma execução: grava `trained = true` e soma
+  ao `cardio` do dia os minutos dos exercícios de cardio concluídos (`duration_seconds`).
+  A creatina continua sendo marcada manualmente. Os dois campos ficam como status
+  somente leitura na home, mas são salvos separadamente no histórico para relatórios.
 - Configurações do aluno: `showCreatine`, `showWorkout` e `dailyCardio` (minutos; 0
   desativa) controlam o que aparece no app. Qualquer profissional com vínculo ativo
   (personal **ou** nutricionista) lê e ajusta a configuração do aluno via `student_id`.
@@ -154,9 +158,10 @@
   quando ao menos uma opção está ativa.
 - O web expõe `/history` (Registros) com calendário mensal, filtro por tipo e estatísticas
   básicas do mês. A tela é somente leitura para o aluno e para o profissional vinculado,
-  e mostra apenas os tipos ativos no acompanhamento.
-- O app também expõe a tela Registros (calendário mensal, filtros e estatísticas); cada
-  aluno vê apenas os próprios registros.
+  e mostra apenas os tipos ativos no acompanhamento. Cada dia com cardio exibe os minutos
+  no calendário e as estatísticas trazem o total e a média por dia de cardio.
+- O app também expõe a tela Registros (calendário mensal, filtros, minutos de cardio por
+  dia e média por dia de cardio); cada aluno vê apenas os próprios registros.
 
 ## App Android (MVP)
 
@@ -170,11 +175,14 @@
   tempo (`duration_seconds`). O progresso é local (SharedPreferences), não vai para a
   API e é retomado depois de sair da tela ou encerrar o app; "Encerrar treino" descarta
   a execução. A exceção é a carga do exercício atual, que o aluno pode ajustar na
-  execução e que é gravada no plano quando online (ver Treinos).
+  execução e que fica salva no aparelho (e também no plano quando a API aceita; ver
+  Treinos).
 - O início exibe o cartão de acompanhamento diário quando a configuração definida no web
-  ativa creatina, treino e/ou cardio: o aluno marca a creatina e o treino do dia e
-  registra os minutos de cardio (upsert em `/fitness/config/history`). O cartão leva à
-  tela Registros, que lista o mês corrente com calendário e estatísticas.
+  ativa creatina, treino e/ou cardio: o aluno marca a creatina, e treino e cardio são
+  preenchidos automaticamente ao concluir um treino (upsert em `/fitness/config/history`
+  com os campos separados). O cartão mostra os dois como status somente leitura e leva à
+  tela Registros, que lista o mês corrente com calendário, minutos de cardio por dia e
+  estatísticas com a média por dia de cardio.
 - Profissionais usam o web para gestão. Se entrarem no app, veem apenas os próprios
   dados, sem superfície de gestão. Contas com `HEALTH_USER` + role de profissional
   continuam sendo alunos no app.

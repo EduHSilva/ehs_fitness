@@ -55,6 +55,17 @@ data class TrainingSession(
             completedSeriesFor(index).coerceAtMost(exercises[index].totalSeries)
         }
 
+    /** Minutos de cardio já concluídos; usado no acompanhamento diário ao encerrar o treino. */
+    val completedCardioMinutes: Double
+        get() = exercises.indices.sumOf { index ->
+            val exercise = exercises[index]
+            if (exercise.isCardio && isExerciseDone(index)) {
+                (exercise.durationSeconds ?: 0) / 60.0
+            } else {
+                0.0
+            }
+        }
+
     /** Próximo pendente depois do ativo, na ordem do plano; volta ao começo ao chegar no fim. */
     val nextPendingExercise: TrainingExercise?
         get() = nextPendingIndex(exerciseIndex)?.let { exercises[it] }

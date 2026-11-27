@@ -41,9 +41,16 @@ function typesFor(date: string) {
     .filter(type => filter.value === 'all' || type === filter.value)
 }
 
+/** Minutos de cardio visíveis no dia, respeitando o filtro atual. */
+function cardioMinutes(date: string) {
+  return typesFor(date).includes('cardio') ? recordFor(date)?.cardio ?? 0 : 0
+}
+
 function cellLabel(cell: NonNullable<CalendarCell>) {
   const names = typesFor(cell.date).map(type => TYPE_LABELS[type])
-  return `${cell.day} de ${label.value}: ${names.length ? names.join(', ') : 'sem registro'}`
+  const cardio = cardioMinutes(cell.date)
+  const detail = cardio > 0 ? `, ${formatMinutes(cardio)} de cardio` : ''
+  return `${cell.day} de ${label.value}: ${names.length ? names.join(', ') : 'sem registro'}${detail}`
 }
 
 onMounted(async () => {
@@ -190,7 +197,12 @@ useSeoMeta({ title: 'Registros' })
           >
             <span class="metric-icon teal"><UIcon :name="TYPE_ICONS.cardio" /></span>
             <strong>{{ formatMinutes(stats.cardioMinutes) }}</strong>
-            <small>{{ stats.cardioDays }} {{ stats.cardioDays === 1 ? 'dia' : 'dias' }} de cardio</small>
+            <small>
+              {{ stats.cardioDays }} {{ stats.cardioDays === 1 ? 'dia' : 'dias' }} de cardio
+              <template v-if="stats.cardioDays">
+                · média {{ formatMinutes(stats.cardioAverage) }}/dia
+              </template>
+            </small>
           </article>
         </section>
 
@@ -233,6 +245,10 @@ useSeoMeta({ title: 'Registros' })
                     <UIcon :name="TYPE_ICONS[type]" />
                   </span>
                 </div>
+                <span
+                  v-if="cardioMinutes(cell.date) > 0"
+                  class="history-day-cardio"
+                >{{ formatMinutes(cardioMinutes(cell.date)) }}</span>
               </template>
             </div>
           </div>

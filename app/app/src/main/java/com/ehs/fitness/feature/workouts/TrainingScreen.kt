@@ -66,6 +66,7 @@ fun TrainingScreen(workoutId: Int, onClose: () -> Unit) {
             it.workoutRepository,
             it.trainingRepository,
             it.trackingRepository,
+            it.loadOverrides,
             it.restVibrator,
         )
     }
@@ -407,7 +408,7 @@ private fun LoadEditor(
             }
         }
         Text(
-            "A carga vale para as próximas execuções quando o app estiver online.",
+            "A carga fica salva no seu app e vale para as próximas execuções.",
             style = MaterialTheme.typography.labelSmall,
             color = FitnessTheme.colors.subtle,
         )
@@ -511,6 +512,7 @@ private fun FinishedTraining(
     onDone: () -> Unit,
 ) {
     val elapsedMinutes = ((System.currentTimeMillis() - session.startedAtMillis) / 60000).coerceAtLeast(0)
+    val cardioMinutes = session.completedCardioMinutes
 
     Column(
         Modifier
@@ -576,7 +578,11 @@ private fun FinishedTraining(
                     modifier = Modifier.size(16.dp),
                 )
                 Text(
-                    "Treino registrado no acompanhamento de hoje.",
+                    if (cardioMinutes > 0.0) {
+                        "Treino e ${WorkoutFormat.formatDecimal(cardioMinutes)} min de cardio registrados no acompanhamento de hoje."
+                    } else {
+                        "Treino registrado no acompanhamento de hoje."
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

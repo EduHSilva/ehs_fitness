@@ -14,6 +14,7 @@ import com.ehs.fitness.data.remote.TrackingApi
 import com.ehs.fitness.data.remote.WorkoutApi
 import com.ehs.fitness.data.repository.AuthRepository
 import com.ehs.fitness.data.repository.DietRepository
+import com.ehs.fitness.data.repository.LoadOverrideRepository
 import com.ehs.fitness.data.repository.StudentRepository
 import com.ehs.fitness.data.repository.TrackingRepository
 import com.ehs.fitness.data.repository.TrainingSessionRepository
@@ -41,6 +42,7 @@ class AppContainer(context: Context) {
     val studentRepository = StudentRepository(retrofit.create(StudentApi::class.java))
     val trackingRepository = TrackingRepository(retrofit.create(TrackingApi::class.java))
     val trainingRepository = TrainingSessionRepository(prefs, json)
+    val loadOverrides = LoadOverrideRepository(prefs, sessionManager, json)
     val restVibrator = RestVibrator(appContext)
 
     val googleWebClientId: String = BuildConfig.GOOGLE_WEB_CLIENT_ID

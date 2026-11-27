@@ -49,7 +49,12 @@ import com.ehs.fitness.ui.appViewModel
 @Composable
 fun WorkoutsScreen(onStartWorkout: (Int) -> Unit) {
     val vm: WorkoutsViewModel = appViewModel {
-        WorkoutsViewModel(it.workoutRepository, it.trainingRepository, it.studentRepository)
+        WorkoutsViewModel(
+            it.workoutRepository,
+            it.trainingRepository,
+            it.studentRepository,
+            it.loadOverrides,
+        )
     }
     val state by vm.state.collectAsStateWithLifecycle()
 

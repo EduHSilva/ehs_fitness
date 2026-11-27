@@ -236,4 +236,37 @@ class TrainingSessionTest {
         assertEquals("por tempo", WorkoutFormat.durationLabel(0))
         assertEquals("20 min", WorkoutFormat.durationLabel(1_200))
     }
+
+    @Test
+    fun `minutos de cardio concluidos alimentam o acompanhamento`() {
+        val esteira = WorkoutExercise(
+            exerciseId = 3,
+            name = "Esteira",
+            bodyPart = "cardio",
+            series = 1,
+            repetitions = 0,
+            durationSeconds = 1_200,
+        )
+        val bike = WorkoutExercise(
+            exerciseId = 4,
+            name = "Bike",
+            bodyPart = "cardio",
+            series = 1,
+            repetitions = 0,
+            durationSeconds = 300,
+        )
+        val session = TrainingSession.start(
+            Workout(id = 10, name = "Cardio", exercises = listOf(esteira, bike)),
+            nowMillis = 0L,
+        )!!
+
+        assertEquals(0.0, session.completedCardioMinutes, 0.0)
+
+        val afterFirst = session.completeSeries(nowMillis = 0L)
+        assertEquals(20.0, afterFirst.completedCardioMinutes, 0.0)
+
+        val finished = afterFirst.completeSeries(nowMillis = 0L)
+        assertTrue(finished.isFinished)
+        assertEquals(25.0, finished.completedCardioMinutes, 0.0)
+    }
 }
